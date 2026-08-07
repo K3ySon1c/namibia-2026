@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Dünensilhouette mit Sonne">
+  <title>Namibia 2026</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6D6AE"/>
+      <stop offset="1" stop-color="#E8915A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="352" cy="168" r="60" fill="#F8E6B8"/>
+
+  <!-- ferne Düne -->
+  <path fill="#C97042"
+        d="M0 352 C 96 300 160 268 232 300 C 320 340 384 262 512 296 L512 512 L0 512 Z"/>
+
+  <!-- nahe Düne -->
+  <path fill="#A63C18"
+        d="M0 432 C 120 372 208 412 304 382 C 400 352 452 406 512 388 L512 512 L0 512 Z"/>
+</svg>

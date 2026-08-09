@@ -65,7 +65,7 @@ const TRIP = {
      1. BUCHUNGSSTAND — Übersicht (Abschnitt 1)
   --------------------------------------------------------------------- */
   bookingOverview: {
-    summary: '15 von 17 Nächten sind bezahlt, 2 Anfragen laufen (Quivertree und Twyfelfontein).',
+    summary: '16 von 17 Nächten sind fest gebucht, nur Quivertree ist noch offen. Bezahlt sind alle bis auf den Restbetrag für Twyfelfontein: dort sind 20 % angezahlt, der Rest wird bei Ankunft bezahlt.',
     note: 'Bei Spitzkoppe liegt bisher nur eine vorläufige Bestätigung vor — die endgültige ist angefordert. Referenz SPI-260807-006, eigene Referenz „Schrade".',
     rows: [
       { days: '1',     date: 'Mo 19.10.',            accommodationId: 'kalahari-anib',  type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
@@ -76,11 +76,11 @@ const TRIP = {
       { days: '7',     date: 'So 25.10.',            accommodationId: 'namib-desert',   type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '8',     date: 'Mo 26.10.',            accommodationId: 'tiger-reef',     type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '9',     date: 'Di 27.10.',            accommodationId: 'spitzkoppe',     type: 'Dachzelt', status: 'paid',      statusText: 'bezahlt, Endbestätigung ausstehend' },
-      { days: '10',    date: 'Mi 28.10.',            accommodationId: 'twyfelfontein',  type: 'Dachzelt', status: 'requested', statusText: 'angefragt per Mail' },
+      { days: '10',    date: 'Mi 28.10.',            accommodationId: 'twyfelfontein',  type: 'Dachzelt', status: 'booked',    statusText: 'fest gebucht, 20 % angezahlt, Rest vor Ort' },
       { days: '11',    date: 'Do 29.10.',            accommodationId: 'etosha-safari-camp', type: 'Dachzelt', status: 'paid',  statusText: 'gebucht und bezahlt' },
       { days: '12',    date: 'Fr 30.10.',            accommodationId: 'halali',         type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '13–14', date: 'Sa 31.10. / So 01.11.', accommodationId: 'onguma-tamboti', type: 'Dachzelt', status: 'paid',     statusText: 'gebucht und bezahlt' },
-      { days: '15–16', date: 'Mo 02. / Di 03.11.',   accommodationId: 'aloegrove',      type: 'Zimmer',   status: 'booked',    statusText: 'gebucht, Zahlung per Link' },
+      { days: '15–16', date: 'Mo 02. / Di 03.11.',   accommodationId: 'aloegrove',      type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '17',    date: 'Mi 04.11.',            accommodationId: 'okapuka',        type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' }
     ]
   },
@@ -92,9 +92,9 @@ const TRIP = {
   tasks: [
     { id: 't-quivertree',   title: 'Quivertree bestätigen',            details: 'Mail und WhatsApp sind raus. Bei weiterem Schweigen anrufen.', urgency: 'hoch', urgencyNote: 'hoch, zweite Reisenacht', accommodationId: 'quivertree' },
     { id: 't-spitzkoppe',   title: 'Spitzkoppe Endbestätigung',        details: 'Vorläufige Bestätigung liegt vor, NAD 600 bezahlt. Endgültige Bestätigung anfordern und offline speichern.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'spitzkoppe' },
-    { id: 't-twyfel-anzahlung', title: 'Twyfelfontein Anzahlung',      details: 'Verfügbarkeit bestätigt. 20 % Anzahlung = N$ 660, Rest bei Ankunft. Rechnung und Zahlungsweg kommen von Sondela.', urgency: 'hoch', urgencyNote: 'hoch', accommodationId: 'twyfelfontein' },
+    { id: 't-twyfel-anzahlung', title: 'Twyfelfontein Restzahlung',    details: 'Fest gebucht, 20 % Anzahlung = N$ 660 bezahlt. Der Rest von N$ 2.640 ist bei Ankunft am 28.10. vor Ort fällig — Bargeld oder Karte bereithalten.', urgency: 'erledigt', urgencyNote: 'erledigt, Rest vor Ort', accommodationId: 'twyfelfontein' },
     { id: 't-abbau',        title: 'Abbau vor der Exkursion klären',   details: 'Am 29.10. vor 08:30 abbauen, damit ihr um 11:45 losfahren könnt. Check-out-Zeit erfragen.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd11' },
-    { id: 't-aloegrove-pay', title: 'Aloegrove Bezahllink',            details: 'Absenderdomain, Linkziel und Betrag prüfen, dann zahlen. Kreditkarte statt Überweisung, Währung in N$.', urgency: 'hoch', urgencyNote: 'hoch, Frist läuft', accommodationId: 'aloegrove' },
+    { id: 't-aloegrove-pay', title: 'Aloegrove Bezahllink',            details: 'Erledigt. Über den Link der Lodge bezahlt. Zahlungsbeleg offline speichern.', urgency: 'erledigt', urgencyNote: 'erledigt', accommodationId: 'aloegrove' },
     { id: 't-aloegrove-dinner', title: 'Aloegrove Abendessen',         details: 'Ist es im Booking-Tarif enthalten? Ihr könnt auf der Farm nicht ausweichen.', urgency: 'hoch', urgencyNote: 'hoch', accommodationId: 'aloegrove' },
     { id: 't-aloegrove-akt', title: 'Aloegrove Aktivitäten',           details: 'Pirschfahrt mit den Eigentümern und ggf. Cheetah Conservation Fund für den 03.11.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'aloegrove' },
     { id: 't-okapuka',      title: 'Okapuka Pirschfahrt',              details: 'Vormittag des 05.11., ca. 2 Std., rund N$ 960 p. P.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'okapuka' },
@@ -744,7 +744,7 @@ const TRIP = {
     {
       id: 'twyfelfontein', name: 'Twyfelfontein Elephant Drives & Campsite', type: 'Dachzelt',
       dayNumbers: [10], dateFrom: '2026-10-28', dateTo: '2026-10-29', dateText: '28.–29.10.',
-      status: 'requested', statusText: 'Verfügbarkeit bestätigt, Anzahlung ausstehend', group: null,
+      status: 'booked', statusText: 'fest gebucht, 20 % Anzahlung bezahlt, Rest bei Ankunft', group: null,
       lat: -20.4268, lon: 14.3421,
       phone: '+264 81 399 3815', email: null, contact: 'Sondela',
       reception: '08:00–18:00', reference: null,
@@ -759,11 +759,12 @@ const TRIP = {
         { label: 'Trinkwasser', text: 'nein. Wasser nur für Duschen und Toiletten. Mit vollem Tank ankommen.' },
         { label: 'Strom', text: 'Solarstrom nur im Bar- und Poolbereich zum Laden von Geräten, nicht für die Fahrzeugkühlbox geeignet. Die Bar schließt um 20:00 Uhr.' },
         { label: 'Elefanten-Exkursion', text: 'geführt, zweimal täglich um 08:30 und 14:00, Dauer 3 Stunden, N$ 1.100 pro Person inklusive einer Flasche Wasser. Gebucht ist die Morgenfahrt am 29.10.' },
-        { label: 'Zahlung', text: '20 % nicht rückzahlbare Anzahlung zur Reservierung, Rest bei Ankunft. Bei N$ 3.300 Gesamtsumme sind das N$ 660.' },
+        { label: 'Zahlung', text: '20 % nicht rückzahlbare Anzahlung zur Reservierung, Rest bei Ankunft. Bei N$ 3.300 Gesamtsumme sind das N$ 660 — bezahlt, die Buchung ist damit fest. Der Rest von N$ 2.640 ist am 28.10. vor Ort fällig.' },
         { label: 'Lage', text: 'an der D2612, etwa 18 km nördlich des Twyfelfontein-Besucherzentrums.' }
       ],
       notes: [
-        { level: 'warn', text: 'Anzahlung N$ 660 ausstehend. Rechnung und Zahlungsweg kommen von Sondela.' }
+        { level: 'warn', text: 'Restbetrag N$ 2.640 bei Ankunft am 28.10. vor Ort fällig. Bargeld oder Karte bereithalten.' },
+        { level: 'info', text: 'Fest gebucht. Die 20 % Anzahlung von N$ 660 ist bezahlt.' }
       ],
       image: null
     },
@@ -835,13 +836,13 @@ const TRIP = {
     {
       id: 'aloegrove', name: 'Aloegrove Safari Lodge', type: 'Zimmer',
       dayNumbers: [15, 16], dateFrom: '2026-11-02', dateTo: '2026-11-04', dateText: '02.–04.11.',
-      status: 'booked', statusText: 'gebucht, Zahlung per Link nach Ablauf der 24-Stunden-Stornofrist', group: null,
+      status: 'paid', statusText: 'gebucht und bezahlt', group: null,
       lat: -20.3841, lon: 16.9163,
       phone: null, email: null, reference: null,
       reception: '08:00–18:00',
       address: 'Farm Aloegrove 360, 18 km auf der B1 von Otjiwarongo Richtung Otavi',
       drinkingWater: true, powerAtSite: true,
-      price: 'gebucht, Zahlung per Link offen',
+      price: 'bezahlt, Betrag nachtragen',
       rating: '4,8 / 5 bei 95 Bewertungen',
       intro: 'Familiengeführt, wenige Zimmer, auf einem Hügel mit weitem Blick auf das Waterberg-Massiv, das rund 37 km entfernt liegt. 4,8 / 5 bei 95 Bewertungen.',
       details: [
@@ -849,10 +850,10 @@ const TRIP = {
         { label: 'Aktivitäten', text: 'Pirschfahrt mit den Eigentümern auf dem eigenen Wildgebiet — genannt werden Leopard, Löwe und Gepard, dazu viel Erklärung zu Naturschutz und Farmleben. Die Gastgeber vermitteln Besuche beim Cheetah Conservation Fund in Otjiwarongo.' },
         { label: 'Verpflegung', text: 'Abendessen und Frühstück werden durchgehend gelobt. Ob Abendessen im Booking-Tarif enthalten ist, muss noch geklärt werden.' },
         { label: 'Einschränkungen', text: 'Ausstattung und Mobiliar sind laut einem Gast „nicht Spitzenqualität" — sauber und geräumig, aber kein Designhotel. Ein Gast störte sich an den Uniformen des Personals.' },
-        { label: 'Zahlung', text: 'per Link. Vorher Absenderdomain, Linkziel und Betrag prüfen. Kreditkarte statt Überweisung, Währung möglichst in N$.' }
+        { label: 'Zahlung', text: 'über den Link der Lodge erledigt und bezahlt. Zahlungsbeleg offline speichern und bei der Ankunft griffbereit haben.' }
       ],
       notes: [
-        { level: 'danger', text: 'Bezahllink: Absenderdomain, Linkziel und Betrag prüfen. Kreditkarte statt Überweisung, Währung in N$.' },
+        { level: 'info', text: 'Über den Link der Lodge bezahlt. Zahlungsbeleg offline speichern — auf der Farm ist nicht auf Netz zu zählen.' },
         { level: 'warn', text: 'Ob Abendessen im Booking-Tarif enthalten ist, muss noch geklärt werden — auf der Farm könnt ihr nicht ausweichen.' }
       ],
       image: null
@@ -1087,13 +1088,16 @@ const TRIP = {
           ['Halali, 1 Zeltnacht',                      '✅ bezahlt, ca. N$ 920'],
           ['Onguma Tamboti, 2 Zeltnächte',             '✅ bezahlt, ca. N$ 1.800'],
           ['Okapuka Safari Lodge, 1 Nacht Zimmer',     '✅ bezahlt, Betrag nachtragen'],
-          ['Aloegrove Safari Lodge, 2 Nächte Zimmer',  'gebucht, Zahlung per Link offen'],
+          ['Aloegrove Safari Lodge, 2 Nächte Zimmer',  '✅ bezahlt, Betrag nachtragen'],
           ['Quivertree, 1 Zeltnacht',                  'angefragt, ca. N$ 450'],
           ['Spitzkoppe, 1 Zeltnacht',                  '✅ bezahlt, N$ 600'],
-          ['Twyfelfontein, 1 Zeltnacht',               'N$ 1.100 (N$ 550 p. P.), Anzahlung ausstehend'],
-          ['Elefanten-Exkursion, 2 Personen',          'N$ 2.200 (N$ 1.100 p. P.)'],
+          ['Twyfelfontein, 1 Zeltnacht',               'N$ 1.100 (N$ 550 p. P.), im Restbetrag vor Ort enthalten'],
+          ['Elefanten-Exkursion, 2 Personen',          'N$ 2.200 (N$ 1.100 p. P.), im Restbetrag vor Ort enthalten'],
+          ['Twyfelfontein, Anzahlung 20 %',            '✅ N$ 660 bezahlt'],
+          ['Twyfelfontein, Restzahlung vor Ort am 28.10.', 'N$ 2.640 in bar oder per Karte'],
           ['Parkgebühren',                             'rund N$ 3.100, etwa 155 €']
-        ]
+        ],
+        emphasizeRows: [16]
       },
       paragraphsAfter: [
         'Umrechnung etwa N$ 20 zu 1 €. Der Namibia-Dollar ist 1:1 an den südafrikanischen Rand gekoppelt.'
@@ -1105,7 +1109,7 @@ const TRIP = {
       id: 'caveats', title: 'Vorbehalte', icon: 'info',
       list: [
         { label: 'Preise', text: 'sind Richtwerte, sofern nicht als bezahlt markiert. Bei Buchung bestätigen lassen.' },
-        { label: 'Der Aloegrove-Tarif', text: 'wurde über Booking gebucht, bezahlt wird per Link von der Lodge. Vor dem Bezahlen Absenderdomain, Linkziel und Betrag prüfen; im Zweifel über die Telefonnummer der offiziellen Website oder das Booking-Nachrichtensystem rückfragen.' },
+        { label: 'Der Aloegrove-Tarif', text: 'wurde über Booking gebucht und über den Link der Lodge bezahlt. Der Zahlungsbeleg gehört offline gespeichert, damit er bei der Ankunft ohne Netz vorliegt.' },
         { label: 'Die Parkgebühren-Erhöhung', text: 'ab 01.04.2026 ist bestätigt. Ob weitere Anpassungen kommen, ist offen.' },
         { label: 'Der Straßenzustand', text: 'auf den D-Pisten und besonders der D707 ändert sich mit Grader und Regen. Vor Ort und beim Vermieter nach der aktuellen Lage fragen.' },
         { label: 'Sonnenzeiten', text: 'sind berechnete Werte für den jeweiligen Standort, Abweichung wenige Minuten. Torzeiten der Parks richten sich nach Sonnenauf- und -untergang, können aber lokal abweichen — am Gate bestätigen lassen.' },

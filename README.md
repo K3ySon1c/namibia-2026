@@ -127,7 +127,7 @@ und trage diese beim passenden Tag ein.
 erhöhen:**
 
 ```js
-const CACHE = 'namibia-v2';   //  ->  'namibia-v3'
+const CACHE = 'namibia-v3';   //  ->  'namibia-v4'
 ```
 
 Ohne diesen Schritt behalten die Handys den alten Stand, weil der Service Worker konsequent
@@ -177,7 +177,7 @@ Region des Tages die Landschaft andeuten und offline nichts kosten.
   Inline-SVG-Sprite im HTML, App-Icons im Repository.
 * Ausschließlich relative Pfade, `start_url` und `scope` sind `./`.
 * Service Worker: legt beim `install` **alle** Dateien in den versionierten Cache
-  `namibia-v2` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
+  `namibia-v3` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
   Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt.
 * iOS: `apple-mobile-web-app-capable`, `black-translucent`-Statusleiste,
   `apple-touch-icon` in 180×180, `viewport-fit=cover` und `env(safe-area-inset-*)` in den

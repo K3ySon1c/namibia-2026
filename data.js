@@ -66,7 +66,7 @@ const TRIP = {
   --------------------------------------------------------------------- */
   bookingOverview: {
     summary: '16 von 17 Nächten sind fest gebucht, nur Quivertree ist noch offen. Bezahlt sind alle bis auf den Restbetrag für Twyfelfontein: dort sind 20 % angezahlt, der Rest wird bei Ankunft bezahlt.',
-    note: 'Bei Spitzkoppe liegt bisher nur eine vorläufige Bestätigung vor — die endgültige ist angefordert. Referenz SPI-260807-006, eigene Referenz „Schrade".',
+    note: 'Bei Spitzkoppe liegt die endgültige Bestätigung vor. Referenz SPI-260807-006, eigene Referenz „Schrade". Die Bestätigung ausdrucken und offline speichern — an der Spitzkoppe gibt es keinen Empfang.',
     rows: [
       { days: '1',     date: 'Mo 19.10.',            accommodationId: 'kalahari-anib',  type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '2',     date: 'Di 20.10.',            accommodationId: 'quivertree',     type: 'Dachzelt', status: 'requested', statusText: 'angefragt per Mail und WhatsApp' },
@@ -75,7 +75,7 @@ const TRIP = {
       { days: '6',     date: 'Sa 24.10.',            accommodationId: 'sesriem',        type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '7',     date: 'So 25.10.',            accommodationId: 'namib-desert',   type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '8',     date: 'Mo 26.10.',            accommodationId: 'tiger-reef',     type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
-      { days: '9',     date: 'Di 27.10.',            accommodationId: 'spitzkoppe',     type: 'Dachzelt', status: 'paid',      statusText: 'bezahlt, Endbestätigung ausstehend' },
+      { days: '9',     date: 'Di 27.10.',            accommodationId: 'spitzkoppe',     type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt, Endbestätigung liegt vor' },
       { days: '10',    date: 'Mi 28.10.',            accommodationId: 'twyfelfontein',  type: 'Dachzelt', status: 'booked',    statusText: 'fest gebucht, 20 % angezahlt, Rest vor Ort' },
       { days: '11',    date: 'Do 29.10.',            accommodationId: 'etosha-safari-camp', type: 'Dachzelt', status: 'paid',  statusText: 'gebucht und bezahlt' },
       { days: '12',    date: 'Fr 30.10.',            accommodationId: 'halali',         type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
@@ -91,7 +91,7 @@ const TRIP = {
   --------------------------------------------------------------------- */
   tasks: [
     { id: 't-quivertree',   title: 'Quivertree bestätigen',            details: 'Mail und WhatsApp sind raus. Bei weiterem Schweigen anrufen.', urgency: 'hoch', urgencyNote: 'hoch, zweite Reisenacht', accommodationId: 'quivertree' },
-    { id: 't-spitzkoppe',   title: 'Spitzkoppe Endbestätigung',        details: 'Vorläufige Bestätigung liegt vor, NAD 600 bezahlt. Endgültige Bestätigung anfordern und offline speichern.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'spitzkoppe' },
+    { id: 't-spitzkoppe',   title: 'Spitzkoppe Bestätigung offline sichern', details: 'Endbestätigung liegt vor, NAD 600 bezahlt. Jetzt noch ausdrucken und auf beiden Handys offline speichern — an der Spitzkoppe gibt es keinen Empfang.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'spitzkoppe' },
     { id: 't-twyfel-anzahlung', title: 'Twyfelfontein Restzahlung',    details: 'Fest gebucht, 20 % Anzahlung = N$ 660 bezahlt. Der Rest von N$ 2.640 ist bei Ankunft am 28.10. vor Ort fällig — Bargeld oder Karte bereithalten.', urgency: 'erledigt', urgencyNote: 'erledigt, Rest vor Ort', accommodationId: 'twyfelfontein' },
     { id: 't-abbau',        title: 'Abbau vor der Exkursion klären',   details: 'Am 29.10. vor 08:30 abbauen, damit ihr um 11:45 losfahren könnt. Check-out-Zeit erfragen.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd11' },
     { id: 't-aloegrove-pay', title: 'Aloegrove Bezahllink',            details: 'Erledigt. Über den Link der Lodge bezahlt. Zahlungsbeleg offline speichern.', urgency: 'erledigt', urgencyNote: 'erledigt', accommodationId: 'aloegrove' },
@@ -721,7 +721,7 @@ const TRIP = {
     {
       id: 'spitzkoppe', name: 'Spitzkoppe Community Rest Camp', type: 'Dachzelt',
       dayNumbers: [9], dateFrom: '2026-10-27', dateTo: '2026-10-28', dateText: '27.–28.10.',
-      status: 'paid', statusText: 'NAD 600 bezahlt, Endbestätigung ausstehend', group: null,
+      status: 'paid', statusText: 'gebucht und bezahlt, Endbestätigung liegt vor', group: null,
       lat: -21.8395, lon: 15.2016,
       phone: null, email: null, contact: 'Tamara',
       reference: 'SPI-260807-006', ownReference: 'Schrade',
@@ -736,7 +736,7 @@ const TRIP = {
         { label: 'Preis', text: 'N$ 600 bezahlt. Das liegt über der Richtwertschätzung von N$ 440 — noch zu klären, ob damit Camping und Eintritt für beide abgedeckt sind oder vor Ort noch etwas fällig wird.' }
       ],
       notes: [
-        { level: 'warn', text: 'Reservierung nur per Mail. Vorläufige Bestätigung liegt vor, endgültige angefordert.' },
+        { level: 'info', text: 'Reservierung nur per Mail. Die endgültige Bestätigung liegt vor.' },
         { level: 'danger', text: 'Bestätigung ausdrucken und offline speichern — an der Spitzkoppe gibt es keinen Empfang.' }
       ],
       image: null

@@ -25,7 +25,7 @@ const TRIP = {
       { label: 'Fahrzeug', value: '4x4 mit Dachzelt, Selbstverpflegung' },
       { label: 'Ankunft', value: 'Montag 19.10.2026, Hosea Kutako International Airport' },
       { label: 'Abflug', value: 'Donnerstag 05.11.2026, 19:00 Uhr' },
-      { label: 'Übernachtungen', value: '13 Nächte im Dachzelt, 4 Nächte im Zimmer' },
+      { label: 'Übernachtungen', value: '12 Nächte im Dachzelt, 5 Nächte im Zimmer' },
       { label: 'Gesamtstrecke', value: 'rund 4.000 km' },
       { label: 'Zeitzone', value: 'UTC+2 durchgehend, keine Zeitumstellung' },
       { label: 'Nicht Teil der Reise', value: 'Caprivi/Zambezi-Region, Windhuk als Stadt' }
@@ -65,11 +65,11 @@ const TRIP = {
      1. BUCHUNGSSTAND — Übersicht (Abschnitt 1)
   --------------------------------------------------------------------- */
   bookingOverview: {
-    summary: '16 von 17 Nächten sind fest gebucht, nur Quivertree ist noch offen. Bezahlt sind alle bis auf den Restbetrag für Twyfelfontein: dort sind 20 % angezahlt, der Rest wird bei Ankunft bezahlt.',
+    summary: 'Alle 17 Nächte sind fest gebucht. Bezahlt sind alle bis auf den Restbetrag für Twyfelfontein: dort sind 20 % angezahlt, der Rest wird bei Ankunft bezahlt.',
     note: 'Bei Spitzkoppe liegt die endgültige Bestätigung vor. Referenz SPI-260807-006, eigene Referenz „Schrade". Die Bestätigung ausdrucken und offline speichern — an der Spitzkoppe gibt es keinen Empfang.',
     rows: [
       { days: '1',     date: 'Mo 19.10.',            accommodationId: 'kalahari-anib',  type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
-      { days: '2',     date: 'Di 20.10.',            accommodationId: 'quivertree',     type: 'Dachzelt', status: 'requested', statusText: 'angefragt per Mail und WhatsApp' },
+      { days: '2',     date: 'Di 20.10.',            accommodationId: 'stellies',       type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '3',     date: 'Mi 21.10.',            accommodationId: 'canyon-roadhouse', type: 'Dachzelt', status: 'paid',    statusText: 'gebucht und bezahlt' },
       { days: '4–5',   date: 'Do 22. / Fr 23.10.',   accommodationId: 'klein-aus-vista', type: 'Dachzelt', status: 'paid',    statusText: 'gebucht und bezahlt' },
       { days: '6',     date: 'Sa 24.10.',            accommodationId: 'sesriem',        type: 'Dachzelt', status: 'paid',      statusText: 'gebucht und bezahlt' },
@@ -90,7 +90,6 @@ const TRIP = {
      Abhak-Zustand liegt in localStorage, nicht hier.
   --------------------------------------------------------------------- */
   tasks: [
-    { id: 't-quivertree',   title: 'Quivertree bestätigen',            details: 'Mail und WhatsApp sind raus. Bei weiterem Schweigen anrufen.', urgency: 'hoch', urgencyNote: 'hoch, zweite Reisenacht', accommodationId: 'quivertree' },
     { id: 't-spitzkoppe',   title: 'Spitzkoppe Bestätigung offline sichern', details: 'Endbestätigung liegt vor, NAD 600 bezahlt. Jetzt noch ausdrucken und auf beiden Handys offline speichern — an der Spitzkoppe gibt es keinen Empfang.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'spitzkoppe' },
     { id: 't-twyfel-anzahlung', title: 'Twyfelfontein Restzahlung',    details: 'Fest gebucht, 20 % Anzahlung = N$ 660 bezahlt. Der Rest von N$ 2.640 ist bei Ankunft am 28.10. vor Ort fällig — Bargeld oder Karte bereithalten.', urgency: 'erledigt', urgencyNote: 'erledigt, Rest vor Ort', accommodationId: 'twyfelfontein' },
     { id: 't-abbau',        title: 'Abbau vor der Exkursion klären',   details: 'Am 29.10. vor 08:30 abbauen, damit ihr um 11:45 losfahren könnt. Check-out-Zeit erfragen.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd11' },
@@ -137,12 +136,12 @@ const TRIP = {
       id: 'd2', number: 2, date: '2026-10-20', weekday: 'Dienstag', dateShort: 'Di 20.10.',
       title: 'Kalahari → Keetmanshoop',
       from: 'Kalahari', to: 'Keetmanshoop',
-      distanceKm: 230, distanceText: '~230 km', driveTime: '~2,5 Std.', roadType: 'Teer plus 14 km guter Schotter',
+      distanceKm: 230, distanceText: '~230 km', driveTime: '~2,5 Std.', roadType: 'durchgehend Teer',
       sunrise: '06:07', sunset: '18:56',
-      accommodationId: 'quivertree', accommodationNote: null,
+      accommodationId: 'stellies', accommodationNote: null,
       landscape: 'kalahari',
       program: [
-        'Nachmittags Köcherbaumwald und Giant’s Playground, beide direkt am Camp. Großer Einkauf in Keetmanshoop — er muss Frühstück und Mittag für Tag 3 und 4 abdecken, weil das Canyon Roadhouse keinen Lebensmittelladen hat.'
+        'Fahrt nach Keetmanshoop. Die Unterkunft liegt mitten in der Stadt, Supermärkte sind nah. Großer Einkauf in Keetmanshoop — er muss Frühstück und Mittag für Tag 3 und 4 abdecken, weil das Canyon Roadhouse keinen Lebensmittelladen hat.'
       ],
       highlights: [
         'Großer Einkauf in Keetmanshoop — er muss Tag 3 und 4 abdecken.'
@@ -150,7 +149,7 @@ const TRIP = {
       notes: [
         { level: 'warn', text: 'Großeinkauf in Keetmanshoop: Das Canyon Roadhouse hat keinen Lebensmittelladen. Frühstück und Mittag für Tag 3 und 4 mitnehmen.' }
       ],
-      placeIds: ['koecherbaumwald', 'giants-playground'],
+      placeIds: [],
       activityIds: [],
       image: null
     },
@@ -591,22 +590,25 @@ const TRIP = {
       image: null
     },
     {
-      id: 'quivertree', name: 'Quivertree Forest Rest Camp', type: 'Dachzelt',
+      id: 'stellies', name: 'Stellies Accommodation', type: 'Zimmer',
       dayNumbers: [2], dateFrom: '2026-10-20', dateTo: '2026-10-21', dateText: '20.–21.10.',
-      status: 'requested', statusText: 'angefragt', group: null,
-      lat: -26.4814, lon: 18.2376,
-      phone: null, email: null, reference: null,
+      status: 'paid', statusText: 'gebucht und bezahlt', group: null,
+      lat: -26.5766, lon: 18.1241,
+      address: '12th Street 167, Westdene, Keetmanshoop',
+      phone: '+264 81 222 6545', email: null, reference: null,
       drinkingWater: true, powerAtSite: true,
-      price: 'etwa N$ 400–500 für zwei',
+      price: 'bezahlt, N$ 900',
       rating: null,
-      intro: 'Der private Köcherbaumwald und Giant’s Playground liegen direkt am Camp. Auf der Farm leben oft zahme Geparden.',
+      intro: 'Kleine Selbstversorger-Unterkunft im Stadtteil Westdene, mitten in Keetmanshoop. Gebucht ist Room 3.',
       details: [
-        { label: 'Ausstattung', text: 'Strom, Braai, Sanitärgebäude, kleiner Pool, Restaurant.' },
-        { label: 'Trinkwasser', text: 'ja, Stadtwasseranschluss.' },
-        { label: 'Preis', text: 'etwa N$ 400–500 für zwei.' }
+        { label: 'Zimmer', text: 'Room 3: Apartment mit Klimaanlage, separatem Schlafzimmer, eigenem Bad und ausgestatteter Küche (laut Buchungsportalen).' },
+        { label: 'Anlage', text: 'Selbstverpflegung, sicherer Parkplatz, WLAN, Braai. Trinkwasser wird laut Anbieter bereitgestellt.' },
+        { label: 'Lage', text: 'nahe Museum und Stadion. Die Koordinaten zeigen auf die 12th Street, nicht genau auf das Haus.' },
+        { label: 'Buchung', text: 'direkt über die Webseite des Anbieters gebucht.' },
+        { label: 'Preis', text: 'bezahlt, N$ 900.' }
       ],
       notes: [
-        { level: 'warn', text: 'Anfrage per Mail und WhatsApp ist raus. Bei weiterem Schweigen anrufen.' }
+        { level: 'info', text: 'Laut Gästebewertungen gibt es Self-Check-in. Ankunftszeit trotzdem vorher mit dem Gastgeber abstimmen.' }
       ],
       image: null
     },
@@ -884,8 +886,6 @@ const TRIP = {
      5. SEHENSWÜRDIGKEITEN UND ORTE (Abschnitt 5)
   --------------------------------------------------------------------- */
   places: [
-    { id: 'koecherbaumwald',       name: 'Köcherbaumwald',                    dayNumbers: [2],      dayText: '2',       lat: -26.4814, lon: 18.2376, description: 'privater Wald direkt am Camp, goldenes Abendlicht' },
-    { id: 'giants-playground',     name: 'Giant’s Playground',           dayNumbers: [2],      dayText: '2',       lat: -26.4658, lon: 18.2718, description: 'Labyrinth aus gestapelten Dolerit-Blöcken, Wasser mitnehmen' },
     { id: 'fish-river-viewpoint',  name: 'Fish River Canyon Main Viewpoint',  dayNumbers: [3, 4],   dayText: '3–4',     lat: -27.5892, lon: 17.6146, description: 'zweitgrößter Canyon der Welt, beste Stimmung ab 17:00' },
     { id: 'hobas-gate',            name: 'Hobas-Tor',                         dayNumbers: [3, 4],   dayText: '3–4',     lat: -27.6203, lon: 17.7150, description: 'hier wird die Parkgebühr bezahlt' },
     { id: 'garub',                 name: 'Garub Wildpferde',                  dayNumbers: [5],      dayText: '5',       lat: -26.5948, lon: 16.0757, description: 'Wasserloch mit Beobachtungshütte, ~1 km von der B4' },
@@ -958,7 +958,7 @@ const TRIP = {
     {
       id: 'water', title: 'Trinkwasser', icon: 'drop',
       blocks: [
-        { level: 'ok',     label: 'Verlässlich', text: 'Kalahari Anib, Quivertree, Canyon Roadhouse, Klein-Aus Vista, Sesriem, Namib Desert, Tiger Reef, Etosha Safari Camp, Halali, Onguma.' },
+        { level: 'ok',     label: 'Verlässlich', text: 'Kalahari Anib, Stellies, Canyon Roadhouse, Klein-Aus Vista, Sesriem, Namib Desert, Tiger Reef, Etosha Safari Camp, Halali, Onguma.' },
         { level: 'danger', label: 'Kein Trinkwasser', text: 'Spitzkoppe, Twyfelfontein (Wasser nur für Duschen und Toiletten).' },
         { level: 'danger', label: 'Kein Strom am Stellplatz', text: 'Spitzkoppe, Twyfelfontein (nur am Bar- und Poolbereich), Klein-Aus Vista (nur an der Rezeption).' }
       ],
@@ -1079,6 +1079,7 @@ const TRIP = {
         head: ['Posten', 'Betrag'],
         rows: [
           ['Kalahari Anib Lodge, 1 Nacht Zimmer',      '✅ bezahlt, Betrag nachtragen'],
+          ['Stellies Accommodation, 1 Nacht Zimmer',   '✅ bezahlt, N$ 900'],
           ['Canyon Roadhouse, 1 Zeltnacht',            '✅ bezahlt, ca. N$ 690'],
           ['Klein-Aus Vista, 2 Zeltnächte',            '✅ bezahlt, ca. N$ 1.020'],
           ['Sesriem, 1 Zeltnacht',                     '✅ bezahlt, ca. N$ 1.340'],
@@ -1089,7 +1090,6 @@ const TRIP = {
           ['Onguma Tamboti, 2 Zeltnächte',             '✅ bezahlt, ca. N$ 1.800'],
           ['Okapuka Safari Lodge, 1 Nacht Zimmer',     '✅ bezahlt, Betrag nachtragen'],
           ['Aloegrove Safari Lodge, 2 Nächte Zimmer',  '✅ bezahlt, Betrag nachtragen'],
-          ['Quivertree, 1 Zeltnacht',                  'angefragt, ca. N$ 450'],
           ['Spitzkoppe, 1 Zeltnacht',                  '✅ bezahlt, N$ 600'],
           ['Twyfelfontein, 1 Zeltnacht',               'N$ 1.100 (N$ 550 p. P.), im Restbetrag vor Ort enthalten'],
           ['Elefanten-Exkursion, 2 Personen',          'N$ 2.200 (N$ 1.100 p. P.), im Restbetrag vor Ort enthalten'],

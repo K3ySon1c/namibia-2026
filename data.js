@@ -23,8 +23,6 @@ const TRIP = {
     facts: [
       { label: 'Reisende', value: '2 Erwachsene' },
       { label: 'Fahrzeug', value: '4x4 mit Dachzelt, Selbstverpflegung' },
-      { label: 'Ankunft', value: 'Montag 19.10.2026, Hosea Kutako International Airport' },
-      { label: 'Abflug', value: 'Donnerstag 05.11.2026, 19:00 Uhr' },
       { label: 'Übernachtungen', value: '12 Nächte im Dachzelt, 5 Nächte im Zimmer' },
       { label: 'Gesamtstrecke', value: 'rund 4.000 km' },
       { label: 'Zeitzone', value: 'UTC+2 durchgehend, keine Zeitumstellung' },
@@ -32,6 +30,26 @@ const TRIP = {
     ],
     currencyNote: 'Umrechnung etwa N$ 20 zu 1 €. Der Namibia-Dollar ist 1:1 an den südafrikanischen Rand gekoppelt.'
   },
+
+  /* ---------------------------------------------------------------------
+     FLIGHTS — Hin- und Rückflug. Alle Zeiten Ortszeit.
+  --------------------------------------------------------------------- */
+  flights: [
+    {
+      id: 'outbound', label: 'Hinflug', airline: 'Discover Airlines', flightNo: '4Y142',
+      from: { code: 'MUC', city: 'München' },
+      to:   { code: 'WDH', city: 'Windhuk', airport: 'Hosea Kutako International Airport' },
+      departDate: '2026-10-18', departTime: '21:40',
+      arriveDate: '2026-10-19', arriveTime: '07:35'
+    },
+    {
+      id: 'return', label: 'Rückflug', airline: 'Discover Airlines', flightNo: '4Y143',
+      from: { code: 'WDH', city: 'Windhuk', airport: 'Hosea Kutako International Airport' },
+      to:   { code: 'MUC', city: 'München' },
+      departDate: '2026-11-05', departTime: '20:45',
+      arriveDate: '2026-11-06', arriveTime: '05:50'
+    }
+  ],
 
   /* ---------------------------------------------------------------------
      STATUS-DEFINITIONEN — für die farbcodierten Chips
@@ -85,24 +103,6 @@ const TRIP = {
     ]
   },
 
-  /* ---------------------------------------------------------------------
-     2. OFFENE AUFGABEN — Grundlage der Checkliste (Abschnitt 2)
-     Abhak-Zustand liegt in localStorage, nicht hier.
-  --------------------------------------------------------------------- */
-  tasks: [
-    { id: 't-spitzkoppe',   title: 'Spitzkoppe Bestätigung offline sichern', details: 'Endbestätigung liegt vor, NAD 600 bezahlt. Jetzt noch ausdrucken und auf beiden Handys offline speichern — an der Spitzkoppe gibt es keinen Empfang.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'spitzkoppe' },
-    { id: 't-twyfel-anzahlung', title: 'Twyfelfontein Restzahlung',    details: 'Fest gebucht, 20 % Anzahlung = N$ 660 bezahlt. Der Rest von N$ 2.640 ist bei Ankunft am 28.10. vor Ort fällig — Bargeld oder Karte bereithalten.', urgency: 'erledigt', urgencyNote: 'erledigt, Rest vor Ort', accommodationId: 'twyfelfontein' },
-    { id: 't-abbau',        title: 'Abbau vor der Exkursion klären',   details: 'Am 29.10. vor 08:30 abbauen, damit ihr um 11:45 losfahren könnt. Check-out-Zeit erfragen.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd11' },
-    { id: 't-aloegrove-pay', title: 'Aloegrove Bezahllink',            details: 'Erledigt. Über den Link der Lodge bezahlt. Zahlungsbeleg offline speichern.', urgency: 'erledigt', urgencyNote: 'erledigt', accommodationId: 'aloegrove' },
-    { id: 't-aloegrove-dinner', title: 'Aloegrove Abendessen',         details: 'Ist es im Booking-Tarif enthalten? Ihr könnt auf der Farm nicht ausweichen.', urgency: 'hoch', urgencyNote: 'hoch', accommodationId: 'aloegrove' },
-    { id: 't-aloegrove-akt', title: 'Aloegrove Aktivitäten',           details: 'Pirschfahrt mit den Eigentümern und ggf. Cheetah Conservation Fund für den 03.11.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'aloegrove' },
-    { id: 't-okapuka',      title: 'Okapuka Pirschfahrt',              details: 'Vormittag des 05.11., ca. 2 Std., rund N$ 960 p. P.', urgency: 'mittel', urgencyNote: 'mittel', accommodationId: 'okapuka' },
-    { id: 't-sandwich',     title: 'Sandwich Harbour entscheiden',     details: 'Nur am Vormittag des 27.10. möglich, Touren sind oft Wochen voraus voll.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd9' },
-    { id: 't-gravuren',     title: 'Twyfelfontein-Gravuren',           details: 'Fest auf den Nachmittag des 28.10. — der 29.10. ist durch Exkursion und 355 km voll.', urgency: 'erledigt', urgencyNote: 'erledigt geplant', dayId: 'd10' },
-    { id: 't-rueckgabe',    title: 'Fahrzeugrückgabe klären',          details: 'Flughafen oder Depot in Windhuk? Entscheidet den Ablauf am 05.11.', urgency: 'mittel', urgencyNote: 'mittel', dayId: 'd18' },
-    { id: 't-versicherung', title: 'Zusatzversicherung',               details: 'Reifen und Scheiben sind im Standardtarif meist nicht gedeckt.', urgency: 'hoch', urgencyNote: 'hoch' },
-    { id: 't-betraege',     title: 'Beträge nachtragen',               details: 'Bezahlte Summen für die Kostenübersicht.', urgency: 'niedrig', urgencyNote: 'niedrig' }
-  ],
 
   /* ---------------------------------------------------------------------
      3. DIE ROUTE TAG FÜR TAG — 18 Tage (Abschnitt 3)
@@ -529,31 +529,35 @@ const TRIP = {
     },
     {
       id: 'd18', number: 18, date: '2026-11-05', weekday: 'Donnerstag', dateShort: 'Do 05.11.',
-      title: 'Okapuka → Flughafen, Abflug 19:00',
+      title: 'Okapuka → Windhuk → Flughafen, Abflug 20:45',
       from: 'Okapuka', to: 'Hosea Kutako International Airport',
-      distanceKm: 75, distanceText: '~75 km', driveTime: '~1 Std.', roadType: 'Teer',
+      distanceKm: 35, distanceText: '~35 km', driveTime: '~45 Min. bis 1 Std.', roadType: 'Teer bis zum Depot in Windhuk, dann Shuttle',
       sunrise: '06:05', sunset: '19:06',
       accommodationId: null, accommodationNote: 'keine Übernachtung, Heimflug',
       landscape: 'bushveld',
       program: [
-        'Von der B1 südlich an Windhuk vorbei auf die Umgehung, dann die B6 nach Osten. Der Flughafen liegt 45 km östlich von Windhuk, ihr müsst nicht in die Stadt.'
+        'Über die B1 nach Süden zum Depot des Vermieters in Windhuk. Dort gebt ihr das Fahrzeug zurück. Der letzte Shuttle des Vermieters bringt euch um 15:00 zum Flughafen, der 45 km östlich der Stadt liegt.'
       ],
       schedule: [
         { time: '06:30',       step: 'optional Morgenpirschfahrt auf dem Gelände, ca. 2 Std., rund N$ 960 p. P.' },
         { time: '09:00',       step: 'Frühstück' },
         { time: '10:00',       step: 'Check-out' },
-        { time: '14:00',       step: 'Abfahrt' },
-        { time: '~14:45',      step: 'Volltanken kurz vor dem Flughafen' },
-        { time: '15:15–15:45', step: 'Fahrzeugrückgabe' },
-        { time: '~16:00',      step: 'Check-in, 3 Std. vor Abflug' },
-        { time: '19:00',       step: 'Abflug' }
+        { time: '13:00',       step: 'Abfahrt nach Windhuk' },
+        { time: '~13:45',      step: 'Volltanken in Windhuk' },
+        { time: 'bis 14:30',   step: 'Fahrzeugrückgabe im Depot' },
+        { time: '15:00',       step: 'Letzter Shuttle des Vermieters zum Flughafen' },
+        { time: '~15:45',      step: 'Ankunft am Flughafen' },
+        { time: '17:45',       step: 'Check-in, 3 Std. vor Abflug' },
+        { time: '20:45',       step: 'Abflug 4Y143, Discover Airlines' },
+        { time: 'Fr 05:50',    step: 'Ankunft in München am 06.11.' }
       ],
       highlights: [
-        'Der Flughafen liegt 45 km östlich von Windhuk — nicht in die Stadt.'
+        'Der letzte Shuttle zum Flughafen fährt um 15:00 ab Windhuk.'
       ],
       notes: [
-        { level: 'danger', text: 'Falls die Rückgabe in Windhuk statt am Flughafen ist: Hinweg, Rückweg und Shuttle kosten etwa 1,5 Stunden zusätzlich. Fahrt dann gegen 12:00 los.' },
-        { level: 'warn', text: 'Volltanken kurz vor dem Flughafen, gegen 14:45.' }
+        { level: 'danger', text: 'Der letzte Shuttle des Vermieters fährt um 15:00 in Windhuk zum Flughafen. Wer ihn verpasst, muss selbst hinkommen, die Fahrt dauert rund 45 Minuten.' },
+        { level: 'warn', text: 'Volltanken in Windhuk vor der Rückgabe, gegen 13:45.' },
+        { level: 'info', text: 'Rückgabe 30 Minuten vor dem Shuttle ist eine Planungsannahme. Die genaue Zeit beim Vermieter erfragen.' }
       ],
       placeIds: [],
       activityIds: ['a-okapuka-pirschfahrt'],
@@ -1040,7 +1044,7 @@ const TRIP = {
         {
           title: 'Rückgabe',
           paragraphs: [
-            'Ort noch zu klären: Flughafen oder Depot in Windhuk. Rückgabe meist mit vollem Tank und innerhalb der Geschäftszeiten.'
+            'Rückgabe am 05.11. im Depot des Vermieters in Windhuk, geplant bis 14:30. Der letzte Shuttle zum Flughafen fährt um 15:00, danach nur noch auf eigene Faust (rund 45 Minuten Fahrt). Rückgabe meist mit vollem Tank.'
           ]
         }
       ]
@@ -1122,7 +1126,26 @@ const TRIP = {
      KARTE — Bounding-Box für die selbst gezeichnete SVG-Übersichtskarte.
      Namibia grob: Nord −17, Süd −29, West 11.7, Ost 25.3
   --------------------------------------------------------------------- */
-  mapBounds: { north: -16.9, south: -29.0, west: 11.5, east: 25.4 }
+  mapBounds: { north: -16.9, south: -29.0, west: 11.5, east: 25.4 },
+
+  /* ---------------------------------------------------------------------
+     PACKING — Grundbestand der Packliste.
+     Wird beim Start in localStorage übernommen. Danach pflegt jedes Gerät
+     seine Liste selbst. Neue Einträge hier (mit neuer id) kommen beim
+     nächsten Start dazu; in der App gelöschte Einträge kommen nicht zurück.
+     items: { id, category, text, qty }
+  --------------------------------------------------------------------- */
+  packing: {
+    categories: [
+      { id: 'dokumente', label: 'Dokumente und Geld' },
+      { id: 'kleidung',  label: 'Kleidung' },
+      { id: 'hygiene',   label: 'Hygiene und Gesundheit' },
+      { id: 'technik',   label: 'Technik' },
+      { id: 'camping',   label: 'Camping und Küche' },
+      { id: 'sonstiges', label: 'Sonstiges' }
+    ],
+    items: []
+  }
 };
 
 /* Global verfügbar machen — kein Modulsystem, kein Build. */

@@ -683,6 +683,54 @@ details.acc > summary:active { background: var(--surface-2); }
 }
 .textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
 
+/* ---------- Flüge ------------------------------------------------------- */
+.flight-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.flight-head .ic { color: var(--accent); }
+.flight-head b { flex: 1 1 auto; font-size: 1.02rem; }
+.flight-legs { display: flex; align-items: center; gap: 10px; }
+.flight-leg { flex: 1 1 0; min-width: 0; }
+.flight-leg.to { text-align: right; }
+.flight-time { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+.flight-code { font-size: .8rem; font-weight: 700; letter-spacing: .08em; color: var(--text-muted); }
+.flight-arrow .ic { color: var(--text-muted); width: 18px; height: 18px; }
+.flight-foot { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line-soft); }
+
+/* ---------- Unsere Reise: Tag mit Unterkunft ---------------------------- */
+.tripcard-day {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  color: inherit;
+  text-decoration: none;
+}
+.tripcard-day:active { background: var(--surface-2); }
+.tripcard.is-today .daycard-num { background: var(--accent); color: var(--accent-ink); }
+.tripcard.is-today .daycard-num span { color: inherit; opacity: .85; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+
+/* ---------- Packliste --------------------------------------------------- */
+.progress { height: 8px; margin-top: 9px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--success); border-radius: inherit; }
+.packitem { align-items: center; }
+.packitem .checkbox { margin-top: 0; }
+.qty { flex: none; display: flex; align-items: center; gap: 2px; }
+.qtybtn {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface); color: var(--text);
+  cursor: pointer;
+}
+.qtybtn:active { background: var(--surface-2); }
+.qtybtn[aria-disabled="true"] { opacity: .35; cursor: default; }
+.qtybtn .ic { width: 16px; height: 16px; stroke-width: 2.2; }
+.qty-val { min-width: 26px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.packform { display: grid; gap: 8px; padding: 12px 14px; }
+.packform-row { display: flex; gap: 8px; }
+.packform-row .input-qty { flex: 0 0 72px; }
+.packform-row select { flex: 1 1 auto; min-width: 0; }
+.packform-row .btn { flex: none; padding: 0 14px; }
+
 /* ---------- Suche ------------------------------------------------------- */
 .overlay {
   position: fixed;
@@ -784,4 +832,6 @@ html[data-theme="dark"] .toast { background: var(--surface-2); color: var(--text
   .tab { font-size: .62rem; }
   .daycard-num { width: 54px; }
   .countdown-num { font-size: 3rem; }
+  .qtybtn { width: 30px; height: 30px; }
+  .checkitem .del { width: 30px; }
 }

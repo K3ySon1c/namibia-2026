@@ -47,10 +47,10 @@
 
   /* Speicher ----------------------------------------------------------- */
   var STORE = {
-    theme:   'namibia.theme',
-    tasks:   'namibia.tasks',
-    packing: 'namibia.packing',
-    manual:  'namibia.manualDay'
+    theme:         'namibia.theme',
+    packing:       'namibia.packing',
+    packingSeeded: 'namibia.packingSeeded',
+    manual:        'namibia.manualDay'
   };
 
   function load(key, fallback) {
@@ -100,6 +100,7 @@
   function stay(id) { return byId(D.accommodations, id); }
   function place(id){ return byId(D.places, id); }
   function act(id)  { return byId(D.activities, id); }
+  function flight(id) { return byId(D.flights, id); }
 
   function statusChip(statusKey, text) {
     var st = D.statuses[statusKey] || D.statuses.open;
@@ -132,6 +133,37 @@
         icon('map') + '<span>Google Maps</span></a>' +
       '</div>' +
       '<p class="tiny muted" style="margin-top:6px">Die Koordinaten stehen offline zur Verfügung und lassen sich ins Navi tippen. Die beiden Links greifen erst, wenn wieder Netz oder eine Karten-App da ist.</p>';
+  }
+
+  /* Flüge -------------------------------------------------------------- */
+  function shortDate(iso) {
+    var d = isoToDate(iso);
+    return WEEKDAYS[d.getDay()].slice(0, 2) + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.';
+  }
+
+  function flightCard(f) {
+    function leg(time, place, iso, cls) {
+      return '<div class="flight-leg ' + cls + '">' +
+        '<div class="flight-time">' + esc(time) + '</div>' +
+        '<div class="flight-code">' + esc(place.code) + '</div>' +
+        '<div class="small muted">' + esc(place.city) + ' · ' + esc(shortDate(iso)) + '</div>' +
+      '</div>';
+    }
+    return '<div class="card flightcard"><div class="card-body">' +
+      '<div class="flight-head">' + icon('plane') + '<b>' + esc(f.label) + '</b>' +
+        '<span class="chip chip-plain">' + esc(f.flightNo) + '</span></div>' +
+      '<div class="flight-legs">' +
+        leg(f.departTime, f.from, f.departDate, 'from') +
+        '<div class="flight-arrow">' + icon('next') + '</div>' +
+        leg(f.arriveTime, f.to, f.arriveDate, 'to') +
+      '</div>' +
+      '<div class="flight-foot tiny muted">' + esc(f.airline) + ' · alle Zeiten Ortszeit</div>' +
+    '</div></div>';
+  }
+
+  /* Flüge, die an einem Reisetag starten oder landen */
+  function flightsForDay(d) {
+    return D.flights.filter(function (f) { return f.departDate === d.date || f.arriveDate === d.date; });
   }
 
   /* =========================================================================
@@ -387,7 +419,8 @@
     route: '',
     manualDayId: load(STORE.manual, null),
     manualOpen: false,
-    mapSel: D.accommodations[0].id
+    mapSel: D.accommodations[0].id,
+    packCat: D.packing.categories[0].id
   };
 
   /* --- Heute ---------------------------------------------------------- */
@@ -437,6 +470,11 @@
       out += '<div class="section"><div class="section-title">Wichtig heute</div>' + notesHtml(danger) + '</div>';
     }
 
+    var fl = flightsForDay(d);
+    if (fl.length) {
+      out += '<div class="section"><div class="section-title">Flug heute</div>' + fl.map(flightCard).join('') + '</div>';
+    }
+
     if (s) {
       out += '<div class="section"><div class="section-title">Heutige Unterkunft</div>' + stayCard(s, d.accommodationNote) + '</div>';
     } else {
@@ -468,22 +506,29 @@
 
     /* Kopf je nach Reisephase */
     if (!state.manualDayId && phase === 'before') {
-      var left = daysBetween(isoToday(), D.meta.startDate);
+      /* Countdown bis zum Hinflug, nicht bis Tag 1 */
+      var outbound = flight('outbound');
+      var left = daysBetween(isoToday(), outbound.departDate);
       var d1 = D.days[0];
       out += '<div class="section"><div class="hero">' + dayHeaderPlain(d1) +
         '<div class="hero-body">' +
           '<div class="hero-kicker">' + esc(D.meta.title) + '</div>' +
-          '<div class="countdown"><span class="countdown-num">' + left + '</span>' +
-          '<span class="countdown-lab">' + (left === 1 ? 'Tag bis zum Abflug' : 'Tage bis zum Abflug') + '</span></div>' +
-          '<p class="small muted">Los geht es am ' + esc(formatDate(D.meta.startDate)) + '. ' + esc(D.meta.subtitle) + ', ' + D.meta.days + ' Tage, ' + D.meta.nights + ' Nächte.</p>' +
+          (left > 0
+            ? '<div class="countdown"><span class="countdown-num">' + left + '</span>' +
+              '<span class="countdown-lab">' + (left === 1 ? 'Tag bis zum Abflug' : 'Tage bis zum Abflug') + '</span></div>'
+            : '<div class="countdown"><span class="countdown-lab">Heute ist Abflug</span></div>') +
+          '<p class="small muted">Abflug am ' + esc(formatDate(outbound.departDate)) + ' um ' + esc(outbound.departTime) + ' Uhr ab ' + esc(outbound.from.city) + '. ' +
+            esc(D.meta.subtitle) + ', ' + D.meta.days + ' Tage, ' + D.meta.nights + ' Nächte.</p>' +
         '</div></div></div>';
 
-      var open = openTaskCount();
+      out += '<div class="section"><div class="section-title">Hinflug</div>' + flightCard(outbound) + '</div>';
+
+      var pk = packingStats();
       out += '<div class="section">' +
-        '<a class="card" href="#/checklists"><div class="card-body" style="display:flex;align-items:center;gap:12px">' +
-          icon('list') +
-          '<div style="flex:1 1 auto;min-width:0"><b>Offene Aufgaben</b><div class="small muted">' +
-            (open === 0 ? 'Alles abgehakt' : open + ' von ' + D.tasks.length + ' noch offen') +
+        '<a class="card" href="#/packing"><div class="card-body" style="display:flex;align-items:center;gap:12px">' +
+          icon('bag') +
+          '<div style="flex:1 1 auto;min-width:0"><b>Packliste</b><div class="small muted">' +
+            (pk.total === 0 ? 'Noch leer' : (pk.done === pk.total ? 'Alles eingepackt' : pk.done + ' von ' + pk.total + ' eingepackt')) +
           '</div></div>' + icon('next', 'ic-chev') +
         '</div></a></div>';
 
@@ -561,10 +606,55 @@
       '</div></a>';
   }
 
-  function viewDays() {
-    return '<div class="section"><div class="section-title">18 Tage · ' + esc(D.meta.subtitle) + '</div>' +
-      D.days.map(function (d) { return dayCardHtml(d, true); }).join('') +
+  /* --- Unsere Reise: Zeitleiste aus Flügen, Tagen und Unterkünften ----- */
+
+  /* Tageskarte mit der Unterkunft als zweiter Zeile. Zwei getrennte Links,
+     weil ein Link nicht in einem anderen stecken darf. */
+  function tripDayCard(d) {
+    var isToday = d.date === isoToday();
+    var s = d.accommodationId ? stay(d.accommodationId) : null;
+
+    var out = '<div class="card tripcard' + (isToday ? ' is-today' : '') + '">' +
+      '<a class="tripcard-day" href="#/day/' + d.id + '">' +
+        '<div class="daycard-num"><b>' + d.number + '</b><span>' + (isToday ? 'heute' : 'Tag') + '</span></div>' +
+        '<div class="daycard-main">' +
+          '<div class="daycard-date">' + esc(d.dateShort) + ' · ' + esc(d.weekday) + '</div>' +
+          '<div class="daycard-title">' + esc(d.title) + '</div>' +
+          '<div class="daycard-meta">' +
+            (d.distanceKm ? '<span>' + d.distanceKm + ' km</span>' : '') +
+            (d.driveTime ? '<span>' + esc(d.driveTime) + '</span>' : '') +
+            '<span>' + esc(d.sunrise) + ' – ' + esc(d.sunset) + '</span>' +
+          '</div>' +
+        '</div></a>';
+
+    if (s) {
+      var chips = statusChip(s.status, D.statuses[s.status].label);
+      if (s.drinkingWater === false) chips += '<span class="chip chip-danger">kein Trinkwasser</span>';
+      if (s.powerAtSite === false) chips += '<span class="chip chip-danger">kein Strom</span>';
+      out += '<a class="linkrow" href="#/stay/' + esc(s.id) + '">' + icon('stays') +
+        '<div class="linkrow-main"><b>' + esc(s.name) + '</b>' +
+          '<span>' + esc(s.type) + (d.accommodationNote ? ' · ' + esc(d.accommodationNote) : '') + '</span>' +
+          '<div class="chips">' + chips + '</div></div>' +
+        icon('next', 'ic-chev') + '</a>';
+    } else {
+      out += '<div class="linkrow" style="cursor:default">' + icon('stays') +
+        '<div class="linkrow-main"><span>' + esc(d.accommodationNote || 'keine Übernachtung') + '</span></div></div>';
+    }
+    return out + '</div>';
+  }
+
+  function viewTrip() {
+    var out = '<div class="section"><div class="section-title">' + D.meta.days + ' Tage · ' + esc(D.meta.subtitle) + '</div>' +
+      flightCard(flight('outbound')) +
+      D.days.map(tripDayCard).join('') +
+      flightCard(flight('return')) +
     '</div>';
+
+    out += '<div class="section"><div class="section-title">Buchungsstand</div><div class="card"><div class="card-body">' +
+      '<p class="strong">' + esc(D.bookingOverview.summary) + '</p>' +
+      '<p class="small muted">' + esc(D.bookingOverview.note) + '</p>' +
+    '</div></div></div>';
+    return out;
   }
 
   function viewDay(id) {
@@ -590,6 +680,12 @@
     (roadLine.length ? '<div class="card-body small muted" style="border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:flex-start">' +
         icon('car') + '<span>' + esc(roadLine.join(' · ')) + '</span></div>' : '') +
     '</div></div>';
+
+    /* Flug an diesem Tag (Ankunft an Tag 1, Abflug an Tag 18) */
+    var fl = flightsForDay(d);
+    if (fl.length) {
+      out += '<div class="section"><div class="section-title">Flug</div>' + fl.map(flightCard).join('') + '</div>';
+    }
 
     /* Programm */
     out += '<div class="section prose">' + (d.program || []).map(function (p, i) {
@@ -686,31 +782,6 @@
     '</div></a>';
   }
 
-  function viewStays() {
-    var out = '<div class="section"><div class="section-title">14 Stationen, chronologisch</div>';
-    out += D.accommodations.map(function (s) {
-      var warn = '';
-      if (s.drinkingWater === false) warn += '<span class="chip chip-danger">kein Trinkwasser</span> ';
-      if (s.powerAtSite === false) warn += '<span class="chip chip-danger">kein Strom</span> ';
-      return '<a class="card daycard" href="#/stay/' + esc(s.id) + '">' +
-        '<div class="daycard-num"><b>' + s.dayNumbers.join('·') + '</b><span>Tag</span></div>' +
-        '<div class="daycard-main">' +
-          '<div class="daycard-date">' + esc(s.dateText) + ' · ' + esc(s.type) + '</div>' +
-          '<div class="daycard-title">' + esc(s.name) + '</div>' +
-          '<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:6px">' +
-            statusChip(s.status, D.statuses[s.status].label) + warn +
-          '</div>' +
-        '</div></a>';
-    }).join('');
-    out += '</div>';
-
-    out += '<div class="section"><div class="section-title">Buchungsstand</div><div class="card"><div class="card-body">' +
-      '<p class="strong">' + esc(D.bookingOverview.summary) + '</p>' +
-      '<p class="small muted">' + esc(D.bookingOverview.note) + '</p>' +
-    '</div></div></div>';
-    return out;
-  }
-
   function viewStay(id) {
     var s = stay(id);
     if (!s) return '<div class="section"><p>Unterkunft nicht gefunden.</p></div>';
@@ -796,16 +867,6 @@
         relDays.map(function (d) { return dayCardHtml(d, true); }).join('') + '</div>';
     }
 
-    /* Offene Aufgaben zu dieser Unterkunft */
-    var relTasks = D.tasks.filter(function (t) { return t.accommodationId === s.id; });
-    if (relTasks.length) {
-      out += '<div class="section"><div class="section-title">Aufgaben dazu</div><div class="card">' +
-        relTasks.map(function (t) {
-          return '<a class="linkrow" href="#/checklists">' + icon('list') +
-            '<div class="linkrow-main"><b>' + esc(t.title) + '</b><span>' + esc(t.details) + '</span></div>' +
-            icon('next', 'ic-chev') + '</a>';
-        }).join('') + '</div></div>';
-    }
 
     return out;
   }
@@ -915,11 +976,9 @@
       }).join('') + '</dl>' +
     '</div></div></div>';
 
-    /* Checklisten */
-    out += '<div class="section"><a class="card" href="#/checklists"><div class="card-body" style="display:flex;align-items:center;gap:12px">' +
-      icon('list') + '<div style="flex:1 1 auto;min-width:0"><b>Checklisten</b><div class="small muted">Offene Aufgaben und eigene Packliste · ' +
-      openTaskCount() + ' von ' + D.tasks.length + ' Aufgaben offen</div></div>' + icon('next', 'ic-chev') +
-    '</div></a></div>';
+    /* Flüge */
+    out += '<div class="section"><div class="section-title">Flüge</div>' +
+      D.flights.map(flightCard).join('') + '</div>';
 
     /* Buchungsstand */
     out += '<div class="section"><details class="acc"><summary>' + icon('check') + 'Buchungsstand<svg class="ic caret"><use href="#i-next"></use></svg></summary>' +
@@ -958,53 +1017,115 @@
     return out;
   }
 
-  /* --- Checklisten ---------------------------------------------------- */
+  /* --- Packliste ----------------------------------------------------- */
 
-  function taskState() { return load(STORE.tasks, {}) || {}; }
-  function openTaskCount() {
-    var st = taskState(), n = 0;
-    for (var i = 0; i < D.tasks.length; i++) if (!st[D.tasks[i].id]) n++;
-    return n;
+  function packCategories() { return D.packing.categories; }
+
+  function validCategory(id) {
+    return byId(packCategories(), id) ? id : 'sonstiges';
   }
-  function packingList() { return load(STORE.packing, []) || []; }
 
-  var URGENCY_TONE = { hoch: 'danger', mittel: 'warn', niedrig: 'plain', erledigt: 'success' };
+  /* Bringt Einträge in die aktuelle Form. Ältere Einträge aus der früheren
+     Checkliste hatten weder Menge noch Kategorie. */
+  function normalizePackItem(p) {
+    var qty = parseInt(p.qty, 10);
+    return {
+      id: String(p.id),
+      category: validCategory(p.category),
+      text: String(p.text || '').trim(),
+      qty: qty > 0 ? qty : 1,
+      done: !!p.done
+    };
+  }
 
-  function viewChecklists() {
-    var st = taskState();
-    var pack = packingList();
+  function packingList() {
+    var raw = load(STORE.packing, []);
+    if (!raw || raw.length === undefined) return [];
+    return raw.filter(function (p) { return p && p.id && p.text; }).map(normalizePackItem);
+  }
+
+  /* Übernimmt neue Einträge aus data.js in die gespeicherte Liste.
+     Wer schon einmal übernommen wurde, steht in packingSeeded und wird nicht
+     erneut angelegt. So bleiben in der App gelöschte Einträge gelöscht. */
+  function syncPackingDefaults() {
+    var list = packingList();
+    var seeded = load(STORE.packingSeeded, []) || [];
+    var changed = false;
+    D.packing.items.forEach(function (it) {
+      if (seeded.indexOf(it.id) >= 0) return;
+      seeded.push(it.id);
+      changed = true;
+      if (!byId(list, it.id)) list.push(normalizePackItem(it));
+    });
+    if (changed) {
+      save(STORE.packing, list);
+      save(STORE.packingSeeded, seeded);
+    }
+  }
+
+  function packingStats() {
+    var list = packingList(), done = 0;
+    for (var i = 0; i < list.length; i++) if (list[i].done) done++;
+    return { total: list.length, done: done };
+  }
+
+  function updatePackItem(id, fn) {
+    save(STORE.packing, packingList().map(function (p) {
+      if (p.id === id) fn(p);
+      return p;
+    }));
+  }
+
+  function packItemHtml(p) {
+    return '<div class="checkitem packitem' + (p.done ? ' done' : '') + '" data-pack="' + esc(p.id) + '" role="button" tabindex="0">' +
+      '<span class="checkbox">' + icon('check') + '</span>' +
+      '<div class="checkitem-main"><b>' + esc(p.text) + '</b></div>' +
+      '<div class="qty">' +
+        '<button class="qtybtn" type="button" data-packqty="' + esc(p.id) + '" data-delta="-1" aria-label="Menge verringern"' + (p.qty <= 1 ? ' aria-disabled="true"' : '') + '>' + icon('minus') + '</button>' +
+        '<span class="qty-val" aria-label="Menge">' + p.qty + '</span>' +
+        '<button class="qtybtn" type="button" data-packqty="' + esc(p.id) + '" data-delta="1" aria-label="Menge erhöhen">' + icon('plus') + '</button>' +
+      '</div>' +
+      '<button class="del" type="button" data-packdel="' + esc(p.id) + '" aria-label="Eintrag löschen">' + icon('trash') + '</button>' +
+    '</div>';
+  }
+
+  function viewPacking() {
+    var list = packingList();
+    var st = packingStats();
     var out = '';
 
-    out += '<div class="section"><div class="section-title">Offene Aufgaben aus dem Reiseplan</div><div class="card">' +
-      D.tasks.map(function (t) {
-        var done = !!st[t.id];
-        var tone = URGENCY_TONE[t.urgency] || 'plain';
-        return '<div class="checkitem' + (done ? ' done' : '') + '" data-task="' + esc(t.id) + '" role="button" tabindex="0">' +
-          '<span class="checkbox">' + icon('check') + '</span>' +
-          '<div class="checkitem-main"><b>' + esc(t.title) + '</b>' +
-            '<p>' + esc(t.details) + '</p>' +
-            '<div style="margin-top:6px"><span class="chip chip-' + tone + '">' + esc(t.urgencyNote) + '</span></div>' +
-          '</div></div>';
-      }).join('') + '</div>' +
-      '<p class="tiny muted" style="margin-top:8px">Der Haken wird auf diesem Gerät gespeichert, nicht in einer Cloud. Zum Abgleich mit dem zweiten Handy den Export unten benutzen.</p>' +
-    '</div>';
+    /* Fortschritt */
+    var pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+    out += '<div class="section"><div class="card"><div class="card-body">' +
+      '<b>' + (st.total === 0 ? 'Noch keine Einträge' : st.done + ' von ' + st.total + ' eingepackt') + '</b>' +
+      '<div class="progress" aria-hidden="true"><span style="width:' + pct + '%"></span></div>' +
+    '</div></div></div>';
 
-    out += '<div class="section"><div class="section-title">Eigene Packliste</div><div class="card">' +
-      (pack.length ? pack.map(function (p) {
-        return '<div class="checkitem' + (p.done ? ' done' : '') + '" data-pack="' + esc(p.id) + '" role="button" tabindex="0">' +
-          '<span class="checkbox">' + icon('check') + '</span>' +
-          '<div class="checkitem-main"><b>' + esc(p.text) + '</b></div>' +
-          '<button class="del" type="button" data-packdel="' + esc(p.id) + '" aria-label="Eintrag löschen">' + icon('trash') + '</button>' +
-        '</div>';
-      }).join('') : '<div class="card-body small muted">Noch leer. Trage unten ein, was mit soll.</div>') +
-      '<div class="addrow">' +
-        '<input class="input" id="pack-input" type="text" placeholder="Neuer Eintrag" autocomplete="off">' +
+    /* Einträge je Kategorie, leere Kategorien werden nicht gezeigt */
+    packCategories().forEach(function (c) {
+      var items = list.filter(function (p) { return p.category === c.id; });
+      if (!items.length) return;
+      var done = items.filter(function (p) { return p.done; }).length;
+      out += '<div class="section"><div class="section-title">' + esc(c.label) + ' · ' + done + '/' + items.length + '</div>' +
+        '<div class="card">' + items.map(packItemHtml).join('') + '</div></div>';
+    });
+
+    /* Neuer Eintrag */
+    out += '<div class="section"><div class="section-title">Neuer Eintrag</div><div class="card"><div class="packform">' +
+      '<input class="input" id="pack-input" type="text" placeholder="Was soll mit?" autocomplete="off" aria-label="Gegenstand">' +
+      '<div class="packform-row">' +
+        '<input class="input input-qty" id="pack-qty" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="Menge">' +
+        '<select class="input" id="pack-cat" aria-label="Kategorie">' +
+          packCategories().map(function (c) {
+            return '<option value="' + esc(c.id) + '"' + (c.id === state.packCat ? ' selected' : '') + '>' + esc(c.label) + '</option>';
+          }).join('') +
+        '</select>' +
         '<button class="btn btn-primary" type="button" id="pack-add" aria-label="Hinzufügen">' + icon('plus') + '</button>' +
       '</div>' +
-    '</div></div>';
+    '</div></div></div>';
 
     out += '<div class="section"><div class="section-title">Abgleich zwischen den Handys</div><div class="card"><div class="card-body">' +
-      '<p class="small">Der Stand steckt als JSON in diesem Feld. Auf dem einen Gerät kopieren, auf dem anderen einfügen und importieren. Kein Konto, keine Cloud, kein Netz nötig.</p>' +
+      '<p class="small">Die Packliste wird auf jedem Gerät getrennt gespeichert. Zum Abgleich den Stand auf dem einen Gerät erzeugen und kopieren, auf dem anderen einfügen und importieren. Der Import ersetzt die Liste auf dem Zielgerät. Kein Konto, keine Cloud, kein Netz nötig.</p>' +
       '<textarea class="textarea" id="sync-box" spellcheck="false" aria-label="Datenaustausch als JSON"></textarea>' +
       '<div class="btnrow" style="margin-top:10px">' +
         '<button class="btn" type="button" id="sync-export">' + icon('copy') + '<span>Stand erzeugen</span></button>' +
@@ -1022,34 +1143,35 @@
      6 · Router
      ====================================================================== */
 
-  var TABS = { today: 1, days: 1, stays: 1, map: 1, info: 1 };
+  var TABS = { today: 1, trip: 1, packing: 1, map: 1, info: 1 };
+
+  /* Alte Adressen (Lesezeichen, Verknüpfungen) auf die neuen Reiter lenken */
+  var ROUTE_ALIAS = { days: 'trip', stays: 'trip', checklists: 'packing' };
   var scrollMemory = {};
 
   function parseHash() {
     var h = location.hash.replace(/^#\/?/, '');
     if (!h) return { view: 'today', arg: null };
     var parts = h.split('/');
-    return { view: parts[0], arg: parts[1] ? decodeURIComponent(parts[1]) : null };
+    var view = ROUTE_ALIAS[parts[0]] || parts[0];
+    return { view: view, arg: parts[1] ? decodeURIComponent(parts[1]) : null };
   }
 
   function titleFor(r) {
     switch (r.view) {
       case 'today': return 'Heute';
-      case 'days':  return 'Die 18 Tage';
+      case 'trip':  return 'Unsere Reise';
       case 'day':   var d = day(r.arg); return d ? 'Tag ' + d.number : 'Tag';
-      case 'stays': return 'Unterkünfte';
       case 'stay':  var s = stay(r.arg); return s ? s.name : 'Unterkunft';
+      case 'packing': return 'Packliste';
       case 'map':   return 'Karte';
       case 'info':  return 'Infos';
-      case 'checklists': return 'Checklisten';
       default: return 'Namibia 2026';
     }
   }
 
   function tabFor(r) {
-    if (r.view === 'day') return 'days';
-    if (r.view === 'stay') return 'stays';
-    if (r.view === 'checklists') return 'info';
+    if (r.view === 'day' || r.view === 'stay') return 'trip';
     return TABS[r.view] ? r.view : 'today';
   }
 
@@ -1063,13 +1185,12 @@
 
     var html = '', flush = false;
     switch (r.view) {
-      case 'days':       html = viewDays(); break;
+      case 'trip':       html = viewTrip(); break;
       case 'day':        html = viewDay(r.arg); flush = true; break;
-      case 'stays':      html = viewStays(); break;
       case 'stay':       html = viewStay(r.arg); break;
+      case 'packing':    html = viewPacking(); break;
       case 'map':        html = viewMap(r.arg); break;
       case 'info':       html = viewInfo(); break;
-      case 'checklists': html = viewChecklists(); break;
       default:           html = viewToday(); break;
     }
 
@@ -1078,7 +1199,7 @@
 
     $('#topbar-title').textContent = titleFor(r);
 
-    var isDetail = (r.view === 'day' || r.view === 'stay' || r.view === 'checklists');
+    var isDetail = (r.view === 'day' || r.view === 'stay');
     $('#btn-back').hidden = !isDetail;
 
     var activeTab = tabFor(r);
@@ -1091,7 +1212,7 @@
     state.route = r.view + '/' + (r.arg || '');
     scroller.scrollTop = scrollMemory[state.route] || 0;
 
-    if (r.view === 'checklists') wireChecklists();
+    if (r.view === 'packing') wirePacking();
   }
 
   window.addEventListener('hashchange', render);
@@ -1140,33 +1261,32 @@
       return;
     }
 
-    var task = t.closest ? t.closest('[data-task]') : null;
-    if (task) {
-      var st = taskState();
-      var id = task.getAttribute('data-task');
-      if (st[id]) delete st[id]; else st[id] = true;
-      save(STORE.tasks, st);
+    /* Die Knöpfe in einem Packlisten-Eintrag werden vor dem Eintrag selbst
+       geprüft, sonst würde jeder Tipp darauf auch den Haken umschalten. */
+    var pqty = t.closest ? t.closest('[data-packqty]') : null;
+    if (pqty) {
+      var delta = parseInt(pqty.getAttribute('data-delta'), 10) || 0;
+      updatePackItem(pqty.getAttribute('data-packqty'), function (p) { p.qty = Math.max(1, p.qty + delta); });
       render();
       return;
     }
 
+    /* Tipp auf die Mengenanzeige selbst: nichts tun */
+    if (t.closest && t.closest('.qty')) return;
+
     var pdel = t.closest ? t.closest('[data-packdel]') : null;
     if (pdel) {
       var pid = pdel.getAttribute('data-packdel');
+      var item = byId(packingList(), pid);
+      if (item && !window.confirm('„' + item.text + '“ von der Packliste löschen?')) return;
       save(STORE.packing, packingList().filter(function (p) { return p.id !== pid; }));
       render();
-      ev.stopPropagation();
       return;
     }
 
     var pack = t.closest ? t.closest('[data-pack]') : null;
     if (pack) {
-      var pid2 = pack.getAttribute('data-pack');
-      var list = packingList().map(function (p) {
-        if (p.id === pid2) p.done = !p.done;
-        return p;
-      });
-      save(STORE.packing, list);
+      updatePackItem(pack.getAttribute('data-pack'), function (p) { p.done = !p.done; });
       render();
       return;
     }
@@ -1191,14 +1311,20 @@
     }
   });
 
-  function wireChecklists() {
-    var add = $('#pack-add'), input = $('#pack-input');
+  function wirePacking() {
+    var add = $('#pack-add'), input = $('#pack-input'), qty = $('#pack-qty'), cat = $('#pack-cat');
+    if (cat) cat.addEventListener('change', function () { state.packCat = cat.value; });
     if (add) {
       add.addEventListener('click', function () {
         var text = (input.value || '').trim();
-        if (!text) return;
+        if (!text) { toast('Bitte einen Gegenstand eingeben'); input.focus(); return; }
+        var n = parseInt(qty.value, 10);
+        state.packCat = validCategory(cat.value);
         var list = packingList();
-        list.push({ id: 'p' + Date.now() + Math.floor(Math.random() * 1000), text: text, done: false });
+        list.push(normalizePackItem({
+          id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+          category: state.packCat, text: text, qty: n > 0 ? n : 1, done: false
+        }));
         save(STORE.packing, list);
         render();
         var again = $('#pack-input');
@@ -1215,8 +1341,9 @@
     var exp = $('#sync-export'), imp = $('#sync-import'), cp = $('#sync-copy');
     if (exp) exp.addEventListener('click', function () {
       box.value = JSON.stringify({
-        app: 'namibia-2026', version: 1,
-        tasks: taskState(), packing: packingList()
+        app: 'namibia-2026', version: 2,
+        packing: packingList(),
+        packingSeeded: load(STORE.packingSeeded, []) || []
       }, null, 2);
       toast('Stand erzeugt');
     });
@@ -1227,22 +1354,25 @@
     if (imp) imp.addEventListener('click', function () {
       var raw = (box.value || '').trim();
       if (!raw) { toast('Feld ist leer'); return; }
-      try {
-        var obj = JSON.parse(raw);
-        if (obj.tasks && typeof obj.tasks === 'object') save(STORE.tasks, obj.tasks);
-        if (obj.packing && obj.packing.length !== undefined) save(STORE.packing, obj.packing);
-        render();
-        toast('Stand übernommen');
-      } catch (e) {
-        toast('Kein gültiges JSON');
-      }
+      var obj;
+      try { obj = JSON.parse(raw); } catch (e) { toast('Kein gültiges JSON'); return; }
+      if (!obj || !obj.packing || obj.packing.length === undefined) { toast('Keine Packliste im Feld'); return; }
+      save(STORE.packing, obj.packing);
+      save(STORE.packing, packingList());   /* einmal normalisieren */
+      /* Bereits übernommene Grundeinträge beider Geräte zusammenführen */
+      var seeded = load(STORE.packingSeeded, []) || [];
+      (obj.packingSeeded || []).forEach(function (id) { if (seeded.indexOf(id) < 0) seeded.push(id); });
+      save(STORE.packingSeeded, seeded);
+      syncPackingDefaults();
+      render();
+      toast('Stand übernommen');
     });
   }
 
   /* Zurück ------------------------------------------------------------- */
   $('#btn-back').addEventListener('click', function () {
     if (history.length > 1) history.back();
-    else location.hash = '#/days';
+    else location.hash = '#/trip';
   });
 
   /* Thema -------------------------------------------------------------- */
@@ -1301,6 +1431,14 @@
     D.places.forEach(function (p) {
       idx.push({ kind: 'Orte', title: p.name, sub: 'Tag ' + p.dayText + ' · ' + p.description, href: '#/map/' + p.id, text: p.name + ' ' + p.description });
     });
+    D.flights.forEach(function (f) {
+      idx.push({
+        kind: 'Flüge', title: f.label + ' ' + f.flightNo,
+        sub: shortDate(f.departDate) + ' ' + f.departTime + ' ' + f.from.city + ' → ' + f.to.city,
+        href: '#/trip',
+        text: [f.label, f.flightNo, f.airline, f.from.city, f.from.code, f.to.city, f.to.code].join(' ')
+      });
+    });
     D.activities.forEach(function (a) {
       idx.push({
         kind: 'Aktivitäten', title: a.name,
@@ -1322,7 +1460,7 @@
     var box = $('#search-results');
     q = (q || '').trim().toLowerCase();
     if (q.length < 2) {
-      box.innerHTML = '<p class="small muted" style="margin-top:16px">Mindestens zwei Zeichen. Gesucht wird über Tage, Unterkünfte, Orte und Aktivitäten.</p>';
+      box.innerHTML = '<p class="small muted" style="margin-top:16px">Mindestens zwei Zeichen. Gesucht wird über Tage, Unterkünfte, Flüge, Orte und Aktivitäten.</p>';
       return;
     }
     var hits = searchIndex.filter(function (e) {
@@ -1413,6 +1551,7 @@
      10 · Start
      ====================================================================== */
 
+  syncPackingDefaults();
   if (!location.hash) location.replace('#/today');
   render();
 

@@ -40,7 +40,8 @@
   ],
   "shortcuts": [
     { "name": "Heute",       "url": "./#/today", "short_name": "Heute" },
-    { "name": "Unterkünfte", "url": "./#/stays", "short_name": "Unterkünfte" },
+    { "name": "Unsere Reise", "url": "./#/trip", "short_name": "Reise" },
+    { "name": "Packliste",    "url": "./#/packing", "short_name": "Packliste" },
     { "name": "Karte",       "url": "./#/map",   "short_name": "Karte" }
   ]
 }

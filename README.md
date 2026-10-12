@@ -89,8 +89,8 @@ Unterverzeichnis. Bitte den abschließenden Schrägstrich mit aufrufen.
 ## 6. Wichtig: einmal vor dem Abflug vollständig laden
 
 **Die App einmal bei bestehender Internetverbindung öffnen und jede Ansicht antippen** —
-Heute, Tage, eine Tagesdetailseite, Unterkünfte, eine Unterkunft im Detail, Karte, Infos
-und die Checklisten. Erst dadurch legt der Service Worker alles im Gerätespeicher ab.
+Heute, Unsere Reise, eine Tagesdetailseite, eine Unterkunft im Detail, Packliste, Karte
+und Infos. Erst dadurch legt der Service Worker alles im Gerätespeicher ab.
 
 **Diesen Schritt vor dem Abflug erledigen.** Danach ist die App vollständig ohne Netz
 nutzbar — genau das braucht ihr in Namibia, wo auf weiten Strecken kein Empfang ist.
@@ -108,16 +108,17 @@ Feldnamen englisch, Inhalte deutsch. Struktur:
 | Schlüssel | Inhalt |
 |---|---|
 | `meta` | Eckdaten der Reise |
+| `flights` | Hin- und Rückflug mit Flugnummer, Datum und Uhrzeit (Ortszeit) |
 | `statuses` | Definition der Buchungs-Chips |
 | `landscapes` | Farbpaletten der generierten Horizontgrafiken |
 | `bookingOverview` | Buchungsstand-Tabelle |
-| `tasks` | offene Aufgaben, Grundlage der Checkliste |
 | `days` | die 18 Reisetage |
 | `accommodations` | die 14 Unterkünfte |
 | `places` | Orte und Sehenswürdigkeiten |
 | `activities` | Aktivitäten, vorab oder vor Ort |
 | `info` | Versorgung, Parkgebühren, Fahrzeug, Wetter, Kosten, Vorbehalte |
 | `mapBounds` | Ausschnitt der Übersichtskarte |
+| `packing` | Kategorien und Grundbestand der Packliste |
 
 Verknüpft wird über IDs: ein Tag zeigt über `accommodationId`, `placeIds` und `activityIds`
 auf die anderen Einträge. Wenn du eine neue Unterkunft ergänzt, gib ihr eine eindeutige `id`
@@ -127,13 +128,25 @@ und trage diese beim passenden Tag ein.
 erhöhen:**
 
 ```js
-const CACHE = 'namibia-v3';   //  ->  'namibia-v4'
+const CACHE = 'namibia-v5';   //  ->  'namibia-v6'
 ```
 
 Ohne diesen Schritt behalten die Handys den alten Stand, weil der Service Worker konsequent
 zuerst aus dem Cache liefert. Nach dem Hochladen die App einmal online öffnen: unten
 erscheint der Hinweis **„Neue Version verfügbar"**, ein Tipp auf „Neu laden" übernimmt sie.
 Das auf beiden Handys machen.
+
+### Packliste vorbefüllen
+
+Der Grundbestand steht in `data.js` unter `packing.items`, ein Eintrag pro Gegenstand:
+
+```js
+{ id: 'pk-reisepass', category: 'dokumente', text: 'Reisepass', qty: 2 }
+```
+
+`category` muss eine `id` aus `packing.categories` sein. Beim nächsten Start übernimmt jedes
+Gerät neue Einträge in seine eigene Liste. Einträge, die in der App gelöscht wurden, kommen
+nicht zurück. Deshalb jede `id` nur einmal vergeben und nicht wiederverwenden.
 
 ### Eigene Fotos ergänzen
 
@@ -146,28 +159,30 @@ Region des Tages die Landschaft andeuten und offline nichts kosten.
 
 ## Was die App kann
 
-* **Heute** — vor der Reise Countdown und Vorschau auf Tag 1, während der Reise automatisch
+* **Heute** — vor der Reise Countdown bis zum Hinflug, Flugdaten, Packstand und Vorschau auf Tag 1, während der Reise automatisch
   der aktuelle Tag nach Systemdatum, danach eine Rückblick-Ansicht. Über „Tag manuell wählen"
   lässt sich jederzeit ein anderer Tag festhalten.
-* **Tage** — alle 18 Etappen, Detailansicht mit vollständigem Programmtext, Sonnenzeiten,
-  Unterkunft, Orten und Aktivitäten. Zwischen den Tagen kann man wischen.
-* **Unterkünfte** — chronologisch mit Statusanzeige. In der Detailansicht sind Telefonnummern
-  `tel:`-Links, Mailadressen `mailto:`-Links, Referenznummern lassen sich kopieren.
+* **Unsere Reise** — Zeitleiste vom Hinflug über die 18 Tage bis zum Rückflug. Jede Tageskarte
+  zeigt die Unterkunft der Nacht mit Buchungsstatus und Warnungen. Die Tagesdetailseite enthält
+  den vollständigen Programmtext, Sonnenzeiten, Orte und Aktivitäten; zwischen den Tagen kann
+  man wischen. In der Unterkunft-Detailansicht sind Telefonnummern `tel:`-Links, Mailadressen
+  `mailto:`-Links, Referenznummern lassen sich kopieren.
   **„Kein Trinkwasser" und „Kein Strom am Stellplatz" stehen groß und rot ganz oben** — das ist
   unterwegs die praktisch wichtigste Information.
+* **Packliste** — nach Kategorien gegliedert, mit Menge und Haken für „eingepackt". Einträge
+  lassen sich in der App hinzufügen, in der Menge ändern und löschen.
+  Der Stand liegt in `localStorage`, **pro Gerät**. Zum Abgleich zwischen den beiden Handys
+  gibt es Export und Import als JSON-Textfeld: auf dem einen Gerät „Stand erzeugen" und
+  kopieren, auf dem anderen einfügen und „Importieren". Der Import ersetzt die Liste auf dem
+  Zielgerät. Keine Cloud, kein Konto, keine Anmeldung.
 * **Karte** — eine selbst gezeichnete SVG-Übersicht Namibias mit Route und den 14 Stationen als
   antippbare Punkte. Zu jeder Station und jedem Ort gibt es die Koordinaten zum Kopieren, einen
   `geo:`-Link für die native Karten-App und einen Google-Maps-Link. Echte Kartenkacheln
   funktionieren offline nicht, deshalb dieser Weg: **die Koordinaten lassen sich auch ohne Netz
   ablesen und ins Navi tippen.**
-* **Infos** — aufklappbare Abschnitte zu Versorgung, Trinkwasser, Treibstoff, Bargeld,
+* **Infos** — Flüge, aufklappbare Abschnitte zu Versorgung, Trinkwasser, Treibstoff, Bargeld,
   Parkgebühren, Fahrzeugregeln, Wetter, Kosten und Vorbehalten.
-* **Checklisten** — die offenen Aufgaben aus dem Reiseplan zum Abhaken plus eine leere,
-  selbst befüllbare Packliste. Der Stand liegt in `localStorage`, **pro Gerät**.
-  Zum Abgleich zwischen den beiden Handys gibt es Export und Import als JSON-Textfeld:
-  auf dem einen Gerät „Stand erzeugen" und kopieren, auf dem anderen einfügen und
-  „Importieren". Keine Cloud, kein Konto, keine Anmeldung.
-* **Suche** über Tage, Unterkünfte, Orte und Aktivitäten.
+* **Suche** über Tage, Unterkünfte, Flüge, Orte und Aktivitäten.
 * **Helles Thema als Standard**, weil es in der Mittagssonne besser lesbar ist. Umschalten
   über das Mond-/Sonnensymbol oben rechts, die Einstellung wird gespeichert.
 
@@ -177,7 +192,7 @@ Region des Tages die Landschaft andeuten und offline nichts kosten.
   Inline-SVG-Sprite im HTML, App-Icons im Repository.
 * Ausschließlich relative Pfade, `start_url` und `scope` sind `./`.
 * Service Worker: legt beim `install` **alle** Dateien in den versionierten Cache
-  `namibia-v3` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
+  `namibia-v5` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
   Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt.
 * iOS: `apple-mobile-web-app-capable`, `black-translucent`-Statusleiste,
   `apple-touch-icon` in 180×180, `viewport-fit=cover` und `env(safe-area-inset-*)` in den

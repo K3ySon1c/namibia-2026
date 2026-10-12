@@ -9,8 +9,8 @@
   "id": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F5F1E8",
-  "theme_color": "#B4451F",
+  "background_color": "#F4EFE8",
+  "theme_color": "#D2552B",
   "categories": ["travel", "navigation", "utilities"],
   "icons": [
     {

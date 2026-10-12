@@ -62,7 +62,8 @@ const TRIP = {
   },
 
   /* ---------------------------------------------------------------------
-     LANDSCAPES — Leitmotiv: generierte SVG-Horizontlinie je Tag.
+     LANDSCAPES — Farbpalette je Region. Dient als Hintergrundfarbe, solange
+     das Tagesfoto lädt. (Früher Grundlage der gezeichneten Horizontlinien.)
      Farbverlauf wandert im Reiseverlauf durch die Palette:
      Kalahari-Rot → Canyon-Ocker → Namib-Aprikose → Küstennebel-Grau →
      Granit-Grau → Damaraland-Rost → Etosha-Blassweiß → Waterberg-Grün
@@ -130,7 +131,13 @@ const TRIP = {
       ],
       placeIds: [],
       activityIds: ['a-sundowner-kalahari'],
-      image: null
+      image: './assets/photos/d01.jpg',
+      imageCredit: {
+        caption: 'Rote Dünen der Kalahari', generic: true,
+        artist: 'Olga Ernst & Hp.Baumeler', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Sand_dune_in_the_Kalahari_Desert_(Namibia).jpg'
+      }
     },
     {
       id: 'd2', number: 2, date: '2026-10-20', weekday: 'Dienstag', dateShort: 'Di 20.10.',
@@ -151,7 +158,13 @@ const TRIP = {
       ],
       placeIds: [],
       activityIds: [],
-      image: null
+      image: './assets/photos/d02.jpg',
+      imageCredit: {
+        caption: 'Köcherbaumwald bei Keetmanshoop', generic: false,
+        artist: 'Joachim Huber from Switzerland', license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Quiver_Tree_Forest,_Keetmanshoop_(3166878714).jpg'
+      }
     },
     {
       id: 'd3', number: 3, date: '2026-10-21', weekday: 'Mittwoch', dateShort: 'Mi 21.10.',
@@ -174,7 +187,13 @@ const TRIP = {
       ],
       placeIds: ['hobas-gate', 'fish-river-viewpoint'],
       activityIds: ['a-wanderweg-roadhouse'],
-      image: null
+      image: './assets/photos/d03.jpg',
+      imageCredit: {
+        caption: 'Fish River Canyon', generic: false,
+        artist: 'Olga Ernst', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Fish_River_Canyon,_Namibia_(2017).jpg'
+      }
     },
     {
       id: 'd4', number: 4, date: '2026-10-22', weekday: 'Donnerstag', dateShort: 'Do 22.10.',
@@ -198,7 +217,13 @@ const TRIP = {
       ],
       placeIds: ['fish-river-viewpoint', 'hobas-gate'],
       activityIds: ['a-wanderweg-roadhouse'],
-      image: null
+      image: './assets/photos/d04.jpg',
+      imageCredit: {
+        caption: 'Wüstenpferde bei Aus', generic: false,
+        artist: 'Raymond June from Washington, D.C.', license: 'CC BY 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by/2.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Desert_Horses_close_to_Aus_-_Namibia.jpg'
+      }
     },
     {
       id: 'd5', number: 5, date: '2026-10-23', weekday: 'Freitag', dateShort: 'Fr 23.10.',
@@ -221,7 +246,13 @@ const TRIP = {
       ],
       placeIds: ['garub', 'kolmanskop', 'luederitz'],
       activityIds: ['a-kolmanskop-fuehrung'],
-      image: null
+      image: './assets/photos/d05.jpg',
+      imageCredit: {
+        caption: 'Kolmanskop', generic: false,
+        artist: 'Henning Sidow', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Kolmanskop_Namibia_1609-0938.jpg'
+      }
     },
     {
       id: 'd6', number: 6, date: '2026-10-24', weekday: 'Samstag', dateShort: 'Sa 24.10.',
@@ -246,7 +277,13 @@ const TRIP = {
       ],
       placeIds: ['sesriem-canyon', 'elim-dune'],
       activityIds: [],
-      image: null
+      image: './assets/photos/d06.jpg',
+      imageCredit: {
+        caption: 'Blick vom Sesriem Canyon auf die Dünen', generic: false,
+        artist: 'Daniel Kraft', license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Sesrien_Canyon_Dunes.jpg'
+      }
     },
     {
       id: 'd7', number: 7, date: '2026-10-25', weekday: 'Sonntag', dateShort: 'So 25.10.',
@@ -272,7 +309,13 @@ const TRIP = {
       ],
       placeIds: ['dune45', 'deadvlei'],
       activityIds: ['a-naturfahrt-gondwana', 'a-wanderung-urduenen'],
-      image: null
+      image: './assets/photos/d07.jpg',
+      imageCredit: {
+        caption: 'Deadvlei', generic: false,
+        artist: 'Daniel Kraft', license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Dead_Vlei_Tree_central.jpg'
+      }
     },
     {
       id: 'd8', number: 8, date: '2026-10-26', weekday: 'Montag', dateShort: 'Mo 26.10.',
@@ -297,7 +340,13 @@ const TRIP = {
       ],
       placeIds: ['solitaire'],
       activityIds: ['a-living-desert', 'a-scenic-flight'],
-      image: null
+      image: './assets/photos/d08.jpg',
+      imageCredit: {
+        caption: 'Jetty in Swakopmund', generic: false,
+        artist: 'Daniel Kraft', license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Swakopmund_Jetty_HDR.jpg'
+      }
     },
     {
       id: 'd9', number: 9, date: '2026-10-27', weekday: 'Dienstag', dateShort: 'Di 27.10.',
@@ -327,7 +376,13 @@ const TRIP = {
       ],
       placeIds: ['walvis-lagune', 'sandwich-harbour', 'cape-cross', 'spitzkoppe-massiv'],
       activityIds: ['a-sandwich-harbour', 'a-kajak-pelican'],
-      image: null
+      image: './assets/photos/d09.jpg',
+      imageCredit: {
+        caption: 'Felsbogen an der Spitzkoppe', generic: false,
+        artist: 'Daniel Kraft', license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Spitzkoppe_Rock_Arch_Viewpoint.jpg'
+      }
     },
     {
       id: 'd10', number: 10, date: '2026-10-28', weekday: 'Mittwoch', dateShort: 'Mi 28.10.',
@@ -354,7 +409,13 @@ const TRIP = {
       ],
       placeIds: ['brandberg', 'twyfelfontein-gravuren', 'organ-pipes'],
       activityIds: [],
-      image: null
+      image: './assets/photos/d10.jpg',
+      imageCredit: {
+        caption: 'Felsgravuren von Twyfelfontein', generic: false,
+        artist: 'Jean & Nathalie', license: 'CC BY 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by/2.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Twyfelfontein_Rock_Engraving,_Namibia.jpg'
+      }
     },
     {
       id: 'd11', number: 11, date: '2026-10-29', weekday: 'Donnerstag', dateShort: 'Do 29.10.',
@@ -380,7 +441,13 @@ const TRIP = {
       ],
       placeIds: ['twyfelfontein-gravuren', 'organ-pipes'],
       activityIds: ['a-elefanten-exkursion'],
-      image: null
+      image: './assets/photos/d11.jpg',
+      imageCredit: {
+        caption: 'Orgelpfeifen im Damaraland', generic: false,
+        artist: 'Joachim Huber from Switzerland', license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Organ_Pipes,_Damaraland_Namibia_(3042097012).jpg'
+      }
     },
     {
       id: 'd12', number: 12, date: '2026-10-30', weekday: 'Freitag', dateShort: 'Fr 30.10.',
@@ -405,7 +472,13 @@ const TRIP = {
       ],
       placeIds: ['okaukuejo', 'moringa'],
       activityIds: [],
-      image: null
+      image: './assets/photos/d12.jpg',
+      imageCredit: {
+        caption: 'Wasserloch Okaukuejo', generic: false,
+        artist: 'Christoph Strässler', license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Zebras_and_springboks_at_the_Okaukuejo_Waterhole,_Etosha_National_Park,_Namibia.jpg'
+      }
     },
     {
       id: 'd13', number: 13, date: '2026-10-31', weekday: 'Samstag', dateShort: 'Sa 31.10.',
@@ -428,7 +501,13 @@ const TRIP = {
       ],
       placeIds: ['namutoni'],
       activityIds: ['a-onguma-pirschfahrt'],
-      image: null
+      image: './assets/photos/d13.jpg',
+      imageCredit: {
+        caption: 'Etosha-Pfanne', generic: false,
+        artist: 'Ji-Elle', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Etosha_pan_(1).jpg'
+      }
     },
     {
       id: 'd14', number: 14, date: '2026-11-01', weekday: 'Sonntag', dateShort: 'So 01.11.',
@@ -451,7 +530,13 @@ const TRIP = {
       ],
       placeIds: ['namutoni'],
       activityIds: ['a-onguma-pirschfahrt'],
-      image: null
+      image: './assets/photos/d14.jpg',
+      imageCredit: {
+        caption: 'Fort Namutoni', generic: false,
+        artist: 'Olga Ernst', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Fort_Namutoni,_Etosha_National_Park_(2014).jpg'
+      }
     },
     {
       id: 'd15', number: 15, date: '2026-11-02', weekday: 'Montag', dateShort: 'Mo 02.11.',
@@ -474,7 +559,13 @@ const TRIP = {
       ],
       placeIds: ['waterberg'],
       activityIds: [],
-      image: null
+      image: './assets/photos/d15.jpg',
+      imageCredit: {
+        caption: 'Waterberg-Plateau', generic: false,
+        artist: 'Daniel Kraft', license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Waterberg_from_Restcamp.jpg'
+      }
     },
     {
       id: 'd16', number: 16, date: '2026-11-03', weekday: 'Dienstag', dateShort: 'Di 03.11.',
@@ -503,7 +594,13 @@ const TRIP = {
       ],
       placeIds: ['waterberg'],
       activityIds: ['a-aloegrove-pirschfahrt', 'a-ccf'],
-      image: null
+      image: './assets/photos/d16.jpg',
+      imageCredit: {
+        caption: 'Gepard beim Cheetah Conservation Fund', generic: false,
+        artist: 'Alexander Klink', license: 'CC BY 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Namibia_Otjiwarongo_Cheetah_Conservation_Fund_Cheetah_Sitting.jpg'
+      }
     },
     {
       id: 'd17', number: 17, date: '2026-11-04', weekday: 'Mittwoch', dateShort: 'Mi 04.11.',
@@ -525,7 +622,13 @@ const TRIP = {
       ],
       placeIds: [],
       activityIds: [],
-      image: null
+      image: './assets/photos/d17.jpg',
+      imageCredit: {
+        caption: 'Breitmaulnashorn', generic: true,
+        artist: 'Giles Laurent', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:166_White_rhinoceros_in_Otjozondjupa_Region_Photo_by_Giles_Laurent.jpg'
+      }
     },
     {
       id: 'd18', number: 18, date: '2026-11-05', weekday: 'Donnerstag', dateShort: 'Do 05.11.',
@@ -561,8 +664,28 @@ const TRIP = {
       ],
       placeIds: [],
       activityIds: ['a-okapuka-pirschfahrt'],
-      image: null
+      image: './assets/photos/d18.jpg',
+      imageCredit: {
+        caption: 'Christuskirche in Windhuk', generic: false,
+        artist: 'Diego Delso', license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+        source: 'https://commons.wikimedia.org/wiki/File:Iglesia_de_Cristo,_Windhoek,_Namibia,_2018-08-04,_DD_02.jpg'
+      }
     }
+  ],
+
+  /* ---------------------------------------------------------------------
+     REGIONS — Zwischenüberschriften der Zeitleiste „Unsere Reise“
+  --------------------------------------------------------------------- */
+  regions: [
+    { from: 1,  to: 2,  label: 'Kalahari' },
+    { from: 3,  to: 5,  label: 'Der Süden' },
+    { from: 6,  to: 7,  label: 'Namib' },
+    { from: 8,  to: 9,  label: 'Küste und Erongo' },
+    { from: 10, to: 11, label: 'Damaraland' },
+    { from: 12, to: 14, label: 'Etosha' },
+    { from: 15, to: 16, label: 'Waterberg' },
+    { from: 17, to: 18, label: 'Ausklang' }
   ],
 
   /* ---------------------------------------------------------------------

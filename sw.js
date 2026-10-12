@@ -10,7 +10,7 @@
    Sonst behalten die Geräte den alten Stand.
    ========================================================================== */
 
-const CACHE = 'namibia-v5';
+const CACHE = 'namibia-v6';
 
 const ASSETS = [
   './',
@@ -22,7 +22,26 @@ const ASSETS = [
   './assets/icon.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/apple-touch-icon.png'
+  './assets/apple-touch-icon.png',
+  /* Tagesfotos, zusammen rund 3,5 MB */
+  './assets/photos/d01.jpg',
+  './assets/photos/d02.jpg',
+  './assets/photos/d03.jpg',
+  './assets/photos/d04.jpg',
+  './assets/photos/d05.jpg',
+  './assets/photos/d06.jpg',
+  './assets/photos/d07.jpg',
+  './assets/photos/d08.jpg',
+  './assets/photos/d09.jpg',
+  './assets/photos/d10.jpg',
+  './assets/photos/d11.jpg',
+  './assets/photos/d12.jpg',
+  './assets/photos/d13.jpg',
+  './assets/photos/d14.jpg',
+  './assets/photos/d15.jpg',
+  './assets/photos/d16.jpg',
+  './assets/photos/d17.jpg',
+  './assets/photos/d18.jpg'
 ];
 
 /* --- Installation: alles vorab in den Cache ---------------------------- */

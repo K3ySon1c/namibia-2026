@@ -26,10 +26,13 @@ assets/icon.svg
 assets/icon-192.png
 assets/icon-512.png
 assets/apple-touch-icon.png
+assets/photos/d01.jpg … assets/photos/d18.jpg   (18 Tagesfotos)
 ```
 
 Über die Weboberfläche: *Add file → Upload files*, alle Dateien hineinziehen, `Commit changes`.
-Der Ordner `assets` entsteht dabei automatisch, wenn du ihn mitziehst.
+Die Ordner `assets` und `assets/photos` entstehen dabei automatisch, wenn du sie mitziehst.
+
+Der Ordner `demo/` enthält nur den Design-Vorschlag und muss nicht hochgeladen werden.
 
 Über die Kommandozeile:
 
@@ -110,9 +113,10 @@ Feldnamen englisch, Inhalte deutsch. Struktur:
 | `meta` | Eckdaten der Reise |
 | `flights` | Hin- und Rückflug mit Flugnummer, Datum und Uhrzeit (Ortszeit) |
 | `statuses` | Definition der Buchungs-Chips |
-| `landscapes` | Farbpaletten der generierten Horizontgrafiken |
+| `landscapes` | Farbe je Region, Hintergrund solange ein Foto lädt |
 | `bookingOverview` | Buchungsstand-Tabelle |
-| `days` | die 18 Reisetage |
+| `days` | die 18 Reisetage, je mit Foto (`image`) und Bildnachweis (`imageCredit`) |
+| `regions` | Zwischenüberschriften der Zeitleiste „Unsere Reise“ |
 | `accommodations` | die 14 Unterkünfte |
 | `places` | Orte und Sehenswürdigkeiten |
 | `activities` | Aktivitäten, vorab oder vor Ort |
@@ -128,7 +132,7 @@ und trage diese beim passenden Tag ein.
 erhöhen:**
 
 ```js
-const CACHE = 'namibia-v5';   //  ->  'namibia-v6'
+const CACHE = 'namibia-v6';   //  ->  'namibia-v7'
 ```
 
 Ohne diesen Schritt behalten die Handys den alten Stand, weil der Service Worker konsequent
@@ -148,24 +152,41 @@ Der Grundbestand steht in `data.js` unter `packing.items`, ein Eintrag pro Gegen
 Gerät neue Einträge in seine eigene Liste. Einträge, die in der App gelöscht wurden, kommen
 nicht zurück. Deshalb jede `id` nur einmal vergeben und nicht wiederverwenden.
 
-### Eigene Fotos ergänzen
+### Tagesfotos
 
-Jeder Tag und jede Unterkunft hat ein leeres Feld `image: null`. Dort kann später ein
-relativer Pfad auf ein eigenes Foto stehen (`'./assets/fotos/tag07.jpg'`). Fremde Fotos sind
-bewusst nicht enthalten; die Kopfgrafiken sind generierte SVG-Horizontlinien, die je nach
-Region des Tages die Landschaft andeuten und offline nichts kosten.
+Jeder Tag hat ein Foto unter `assets/photos/` (`d01.jpg` bis `d18.jpg`, 960 Pixel breit,
+zusammen rund 3,5 MB). Die Fotos stammen von Wikimedia Commons und stehen unter
+CC BY oder CC BY-SA. Diese Lizenzen verlangen einen Bildnachweis. Er steht im Feld
+`imageCredit` des Tages und erscheint auf dem Foto, auf der Tagesseite und unter
+**Infos → Bildnachweise**. Zwei Fotos zeigen nicht genau den Ort und sind als Symbolbild
+markiert (`generic: true`): Tag 1 (Kalahari) und Tag 17 (Nashorn).
+
+Ein Foto durch ein eigenes ersetzen:
+
+1. Das eigene Bild als `assets/photos/d07.jpg` speichern (Beispiel Tag 7), etwa 960 Pixel
+   breit und möglichst unter 300 KB.
+2. In `data.js` beim Tag den Eintrag `imageCredit` anpassen, zum Beispiel
+   `caption: 'Deadvlei', artist: 'Sven Schrade'` und für `license`, `licenseUrl` und `source`
+   leere Texte `''`.
+3. Die Cache-Version in `sw.js` erhöhen.
+
+Ein neues Foto mit anderem Dateinamen muss zusätzlich in die Liste `ASSETS` in `sw.js`,
+sonst fehlt es offline.
 
 ---
 
 ## Was die App kann
 
-* **Heute** — vor der Reise Countdown bis zum Hinflug, Flugdaten, Packstand und Vorschau auf Tag 1, während der Reise automatisch
-  der aktuelle Tag nach Systemdatum, danach eine Rückblick-Ansicht. Über „Tag manuell wählen"
+* **Heute** — vor der Reise Countdown bis zum Hinflug auf einem großen Foto, der Hinflug als
+  Bordkarte, der Packstand und die Route als Fotoleiste. Während der Reise automatisch
+  der aktuelle Tag nach Systemdatum mit Foto, Kennzahlen, Warnungen, Unterkunft und einer
+  Vorschau auf morgen, danach eine Rückblick-Ansicht. Über „Tag manuell wählen"
   lässt sich jederzeit ein anderer Tag festhalten.
-* **Unsere Reise** — Zeitleiste vom Hinflug über die 18 Tage bis zum Rückflug. Jede Tageskarte
-  zeigt die Unterkunft der Nacht mit Buchungsstatus und Warnungen. Die Tagesdetailseite enthält
-  den vollständigen Programmtext, Sonnenzeiten, Orte und Aktivitäten; zwischen den Tagen kann
-  man wischen. In der Unterkunft-Detailansicht sind Telefonnummern `tel:`-Links, Mailadressen
+* **Unsere Reise** — Zeitleiste vom Hinflug über die 18 Tage bis zum Rückflug, gegliedert nach
+  Regionen. Jede Tageskarte zeigt das Foto des Tages und die Unterkunft der Nacht mit
+  Buchungsstatus und Warnungen. Die Tagesdetailseite enthält das Foto mit Bildnachweis, den
+  vollständigen Programmtext, den Ablauf als Zeitleiste, Sonnenzeiten, Orte und Aktivitäten;
+  zwischen den Tagen kann man wischen. In der Unterkunft-Detailansicht sind Telefonnummern `tel:`-Links, Mailadressen
   `mailto:`-Links, Referenznummern lassen sich kopieren.
   **„Kein Trinkwasser" und „Kein Strom am Stellplatz" stehen groß und rot ganz oben** — das ist
   unterwegs die praktisch wichtigste Information.
@@ -183,16 +204,17 @@ Region des Tages die Landschaft andeuten und offline nichts kosten.
 * **Infos** — Flüge, aufklappbare Abschnitte zu Versorgung, Trinkwasser, Treibstoff, Bargeld,
   Parkgebühren, Fahrzeugregeln, Wetter, Kosten und Vorbehalten.
 * **Suche** über Tage, Unterkünfte, Flüge, Orte und Aktivitäten.
+* **Suche und Thema** stecken als runde Knöpfe oben rechts in jeder Ansicht.
 * **Helles Thema als Standard**, weil es in der Mittagssonne besser lesbar ist. Umschalten
-  über das Mond-/Sonnensymbol oben rechts, die Einstellung wird gespeichert.
+  über das Mond-/Sonnensymbol, die Einstellung wird gespeichert.
 
 ## Technische Eckpunkte
 
 * Keine externen Ressourcen: System-Schriften über einen Font-Stack, Icons als
   Inline-SVG-Sprite im HTML, App-Icons im Repository.
 * Ausschließlich relative Pfade, `start_url` und `scope` sind `./`.
-* Service Worker: legt beim `install` **alle** Dateien in den versionierten Cache
-  `namibia-v5` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
+* Service Worker: legt beim `install` **alle** Dateien einschließlich der 18 Tagesfotos in den
+  versionierten Cache `namibia-v6` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
   Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt.
 * iOS: `apple-mobile-web-app-capable`, `black-translucent`-Statusleiste,
   `apple-touch-icon` in 180×180, `viewport-fit=cover` und `env(safe-area-inset-*)` in den

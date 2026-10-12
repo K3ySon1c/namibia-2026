@@ -1,5 +1,5 @@
 /* =============================================================================
-   app.js — Namibia-Reise-PWA
+   app.js — Namibia-Reise-PWA, Design „Foto-Magazin“
    Reines JavaScript, kein Framework, kein Build, keine Netzwerkaufrufe.
    ========================================================================== */
 (function () {
@@ -27,12 +27,11 @@
   /* Datum ------------------------------------------------------------- */
   var WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function isoToday() {
     var d = new Date();
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
   function isoToDate(iso) {
     var p = iso.split('-');
     return new Date(+p[0], +p[1] - 1, +p[2]);
@@ -43,6 +42,10 @@
   function formatDate(iso) {
     var d = isoToDate(iso);
     return WEEKDAYS[d.getDay()] + ', ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+  }
+  function shortDate(iso) {
+    var d = isoToDate(iso);
+    return WEEKDAYS[d.getDay()].slice(0, 2) + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.';
   }
 
   /* Speicher ----------------------------------------------------------- */
@@ -96,69 +99,71 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
-  function day(id)  { return byId(D.days, id); }
-  function stay(id) { return byId(D.accommodations, id); }
-  function place(id){ return byId(D.places, id); }
-  function act(id)  { return byId(D.activities, id); }
+  function day(id)    { return byId(D.days, id); }
+  function stay(id)   { return byId(D.accommodations, id); }
+  function place(id)  { return byId(D.places, id); }
+  function act(id)    { return byId(D.activities, id); }
   function flight(id) { return byId(D.flights, id); }
+
+  var TONE_CLASS = { success: 'chip-success', accent: 'chip-accent', warn: 'chip-warn', danger: 'chip-danger' };
 
   function statusChip(statusKey, text) {
     var st = D.statuses[statusKey] || D.statuses.open;
-    return '<span class="chip chip-' + st.tone + '">' + esc(text || st.label) + '</span>';
+    return '<span class="chip ' + (TONE_CLASS[st.tone] || 'chip-plain') + '">' + esc(text || st.label) + '</span>';
+  }
+
+  /* Status plus die beiden wichtigsten Warnungen einer Unterkunft */
+  function stayChips(s) {
+    var c = statusChip(s.status);
+    if (s.drinkingWater === false) c += '<span class="chip chip-danger">kein Trinkwasser</span>';
+    if (s.powerAtSite === false) c += '<span class="chip chip-danger">kein Strom</span>';
+    return '<div class="chips">' + c + '</div>';
   }
 
   function noteHtml(n) {
-    var ico = n.level === 'danger' ? 'warn' : (n.level === 'warn' ? 'warn' : 'info');
-    return '<div class="note note-' + esc(n.level) + '">' + icon(ico) +
-           '<div>' + esc(n.text) + '</div></div>';
+    var cls = { danger: 'note-danger', warn: 'note-warn', ok: 'note-ok' }[n.level] || 'note-info';
+    var ico = n.level === 'danger' || n.level === 'warn' ? 'warn' : (n.level === 'ok' ? 'check' : 'info');
+    return '<div class="note ' + cls + '">' + icon(ico) + '<div>' + esc(n.text) + '</div></div>';
   }
-
-  function notesHtml(list) {
-    if (!list || !list.length) return '';
-    return list.map(noteHtml).join('');
-  }
+  function notesHtml(list) { return (list || []).map(noteHtml).join(''); }
 
   /* Geo-Links ---------------------------------------------------------- */
   function coordText(lat, lon) {
     return lat.toFixed(4) + ', ' + lon.toFixed(4);
   }
-  function geoLinks(lat, lon, name) {
+  function geoButtons(lat, lon, name, mini) {
     var c = lat.toFixed(4) + ',' + lon.toFixed(4);
-    return '<div class="btnrow">' +
+    return '<div class="' + (mini ? 'minibtns' : 'btnrow') + '">' +
       '<button class="btn" type="button" data-copy="' + esc(coordText(lat, lon)) + '" data-copy-label="Koordinaten">' +
-        icon('copy') + '<span>Koordinaten</span></button>' +
-      '<a class="btn" href="geo:' + c + '?q=' + c + '(' + encodeURIComponent(name) + ')">' +
-        icon('pin') + '<span>Karten-App</span></a>' +
+        icon('copy') + '<span>' + (mini ? esc(coordText(lat, lon)) : 'Koordinaten') + '</span></button>' +
+      '<a class="btn" href="geo:' + c + '?q=' + c + '(' + encodeURIComponent(name) + ')">' + icon('pin') + '<span>Karten-App</span></a>' +
       '<a class="btn" href="https://www.google.com/maps/search/?api=1&amp;query=' + c + '" target="_blank" rel="noopener">' +
-        icon('map') + '<span>Google Maps</span></a>' +
-      '</div>' +
-      '<p class="tiny muted" style="margin-top:6px">Die Koordinaten stehen offline zur Verfügung und lassen sich ins Navi tippen. Die beiden Links greifen erst, wenn wieder Netz oder eine Karten-App da ist.</p>';
+        icon('map') + '<span>' + (mini ? 'Maps' : 'Google Maps') + '</span></a>' +
+    '</div>';
   }
 
-  /* Flüge -------------------------------------------------------------- */
-  function shortDate(iso) {
-    var d = isoToDate(iso);
-    return WEEKDAYS[d.getDay()].slice(0, 2) + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.';
-  }
+  /* Fotos und Bildnachweis -------------------------------------------- */
 
-  function flightCard(f) {
-    function leg(time, place, iso, cls) {
-      return '<div class="flight-leg ' + cls + '">' +
-        '<div class="flight-time">' + esc(time) + '</div>' +
-        '<div class="flight-code">' + esc(place.code) + '</div>' +
-        '<div class="small muted">' + esc(place.city) + ' · ' + esc(shortDate(iso)) + '</div>' +
-      '</div>';
-    }
-    return '<div class="card flightcard"><div class="card-body">' +
-      '<div class="flight-head">' + icon('plane') + '<b>' + esc(f.label) + '</b>' +
-        '<span class="chip chip-plain">' + esc(f.flightNo) + '</span></div>' +
-      '<div class="flight-legs">' +
-        leg(f.departTime, f.from, f.departDate, 'from') +
-        '<div class="flight-arrow">' + icon('next') + '</div>' +
-        leg(f.arriveTime, f.to, f.arriveDate, 'to') +
-      '</div>' +
-      '<div class="flight-foot tiny muted">' + esc(f.airline) + ' · alle Zeiten Ortszeit</div>' +
-    '</div></div>';
+  /* Hintergrundfarbe aus der Landschaftspalette, solange das Foto lädt */
+  function photoBg(d) {
+    var L = d && D.landscapes[d.landscape];
+    return L ? L.near : '#3B2A1E';
+  }
+  function photoAlt(d) {
+    return d.imageCredit ? d.imageCredit.caption : d.title;
+  }
+  /* Kurzer Nachweis auf dem Foto. CC BY und CC BY-SA verlangen die Nennung. */
+  function creditShort(d) {
+    var c = d && d.imageCredit;
+    if (!c) return '';
+    return esc(c.caption) + (c.generic ? ' (Symbolbild)' : '') + ' · Foto: ' + esc(c.artist) + ' · ' + esc(c.license);
+  }
+  function creditLong(d) {
+    var c = d && d.imageCredit;
+    if (!c) return '';
+    return esc(c.caption) + (c.generic ? ' (Symbolbild)' : '') + '. Foto: ' + esc(c.artist) + ', ' +
+      '<a href="' + esc(c.licenseUrl) + '" target="_blank" rel="noopener">' + esc(c.license) + '</a>, ' +
+      '<a href="' + esc(c.source) + '" target="_blank" rel="noopener">Wikimedia Commons</a>';
   }
 
   /* Flüge, die an einem Reisetag starten oder landen */
@@ -169,186 +174,20 @@
   /* =========================================================================
      2 · Thema
      ====================================================================== */
+  function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
   function applyTheme(mode) {
     document.documentElement.setAttribute('data-theme', mode);
-    var use = $('#ic-theme').querySelector('use');
-    use.setAttribute('href', mode === 'dark' ? '#i-sun' : '#i-moon');
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', mode === 'dark' ? '#12181D' : '#B4451F');
+    if (meta) meta.setAttribute('content', mode === 'dark' ? '#0F0E0C' : '#F4EFE8');
+    var uses = document.querySelectorAll('[data-toggle-theme] use');
+    for (var i = 0; i < uses.length; i++) uses[i].setAttribute('href', mode === 'dark' ? '#i-sun' : '#i-moon');
   }
   var theme = load(STORE.theme, 'light');
   applyTheme(theme === 'dark' ? 'dark' : 'light');
 
   /* =========================================================================
-     3 · Leitmotiv — generierte SVG-Horizontlinie je Tag
-     ====================================================================== */
-
-  function makeRandom(seed) {
-    var s = (seed * 9301 + 49297) % 233280;
-    return function () {
-      s = (s * 9301 + 49297) % 233280;
-      return s / 233280;
-    };
-  }
-
-  function smoothPath(pts, W, H) {
-    var d = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
-    for (var i = 1; i < pts.length - 1; i++) {
-      var mx = (pts[i][0] + pts[i + 1][0]) / 2;
-      var my = (pts[i][1] + pts[i + 1][1]) / 2;
-      d += ' Q ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1) + ' ' + mx.toFixed(1) + ' ' + my.toFixed(1);
-    }
-    var last = pts[pts.length - 1];
-    d += ' L ' + last[0].toFixed(1) + ' ' + last[1].toFixed(1);
-    return d + ' L ' + W + ' ' + H + ' L 0 ' + H + ' Z';
-  }
-
-  function linePath(pts, W, H) {
-    var d = 'M ' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
-    for (var i = 1; i < pts.length; i++) d += ' L ' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1);
-    return d + ' L ' + W + ' ' + H + ' L 0 ' + H + ' Z';
-  }
-
-  /* Silhouette aus überlagerten Glockenkurven */
-  function bumpLayer(base, bumps, W, step) {
-    var pts = [], x, i;
-    for (x = 0; x <= W + step; x += step) {
-      var y = base;
-      for (i = 0; i < bumps.length; i++) {
-        var t = (x - bumps[i].cx) / bumps[i].w;
-        y = Math.min(y, base - bumps[i].h * Math.exp(-t * t));
-      }
-      pts.push([Math.min(x, W), y]);
-    }
-    return pts;
-  }
-
-  /* Silhouette aus Tafelbergen */
-  function blockLayer(base, blocks, W) {
-    var pts = [[0, base]], i;
-    for (i = 0; i < blocks.length; i++) {
-      var b = blocks[i];
-      pts.push([b.x0, base], [b.x0 + b.slope, base - b.h], [b.x1 - b.slope, base - b.h], [b.x1, base]);
-    }
-    pts.push([W, base]);
-    return pts;
-  }
-
-  /* Liefert { far, near, sharp } für eine Landschaftsform */
-  function silhouette(form, rnd, W, H) {
-    var r = rnd;
-    var farBase = H * 0.74, nearBase = H * 0.93;
-    var i, bumps;
-
-    switch (form) {
-
-      case 'dunes':
-        bumps = [];
-        for (i = 0; i < 3; i++) bumps.push({ cx: W * (0.12 + 0.32 * i) + r() * 40, h: H * (0.24 + r() * 0.2), w: 60 + r() * 40 });
-        var nearB = [];
-        for (i = 0; i < 3; i++) nearB.push({ cx: W * (0.05 + 0.36 * i) + r() * 50, h: H * (0.16 + r() * 0.16), w: 70 + r() * 50 });
-        return { far: bumpLayer(farBase, bumps, W, 8), near: bumpLayer(nearBase, nearB, W, 8), sharp: false };
-
-      case 'canyon':
-        var top = farBase - H * 0.1;
-        var n0 = W * (0.28 + r() * 0.1), n1 = n0 + W * (0.26 + r() * 0.1);
-        var depth = H * 0.34;
-        var far = [[0, top], [n0 * 0.55, top - H * 0.05], [n0, top],
-                   [n0 + 12, top + depth * 0.6], [n0 + 26, top + depth],
-                   [n1 - 26, top + depth], [n1 - 12, top + depth * 0.55],
-                   [n1, top], [n1 + (W - n1) * 0.4, top - H * 0.04], [W, top]];
-        return { far: far, near: bumpLayer(nearBase, [{ cx: W * 0.2, h: H * 0.1, w: 90 }, { cx: W * 0.8, h: H * 0.12, w: 80 }], W, 10), sharp: true };
-
-      case 'coast':
-        var wave = [];
-        for (i = 0; i <= W; i += 10) wave.push([i, farBase + H * 0.02 * Math.sin(i / 26 + r() * 0.01)]);
-        return {
-          far: wave,
-          near: bumpLayer(nearBase, [{ cx: W * 0.16, h: H * 0.1, w: 120 }, { cx: W * 0.72, h: H * 0.08, w: 140 }], W, 12),
-          sharp: false
-        };
-
-      case 'granite':
-        bumps = [
-          { cx: W * (0.28 + r() * 0.08), h: H * 0.52, w: 34 },
-          { cx: W * (0.42 + r() * 0.06), h: H * 0.3,  w: 26 },
-          { cx: W * (0.68 + r() * 0.1),  h: H * 0.36, w: 40 },
-          { cx: W * 0.09, h: H * 0.18, w: 34 }
-        ];
-        return { far: bumpLayer(farBase, bumps, W, 5), near: bumpLayer(nearBase, [{ cx: W * 0.5, h: H * 0.1, w: 160 }], W, 12), sharp: false };
-
-      case 'mesa':
-        return {
-          far: blockLayer(farBase, [
-            { x0: W * 0.06, x1: W * 0.36, h: H * (0.3 + r() * 0.08), slope: 16 },
-            { x0: W * 0.52, x1: W * 0.94, h: H * (0.24 + r() * 0.08), slope: 20 }
-          ], W),
-          near: bumpLayer(nearBase, [{ cx: W * 0.3, h: H * 0.1, w: 110 }, { cx: W * 0.82, h: H * 0.08, w: 90 }], W, 12),
-          sharp: true
-        };
-
-      case 'pan':
-        var flat = [];
-        for (i = 0; i <= W; i += 20) flat.push([i, farBase + H * 0.01 * Math.sin(i / 60)]);
-        return {
-          far: flat,
-          near: bumpLayer(nearBase, [
-            { cx: W * (0.22 + r() * 0.1), h: H * 0.09, w: 26 },
-            { cx: W * (0.62 + r() * 0.12), h: H * 0.11, w: 30 },
-            { cx: W * 0.88, h: H * 0.07, w: 22 }
-          ], W, 8),
-          sharp: false
-        };
-
-      case 'plateau':
-        return {
-          far: blockLayer(farBase, [{ x0: W * 0.1, x1: W * 0.88, h: H * (0.26 + r() * 0.06), slope: 26 }], W),
-          near: bumpLayer(nearBase, [{ cx: W * 0.35, h: H * 0.1, w: 120 }, { cx: W * 0.85, h: H * 0.09, w: 90 }], W, 12),
-          sharp: true
-        };
-
-      default: /* bush */
-        bumps = [];
-        for (i = 0; i < 5; i++) bumps.push({ cx: W * (0.06 + 0.22 * i) + r() * 30, h: H * (0.1 + r() * 0.1), w: 40 + r() * 30 });
-        var nb = [];
-        for (i = 0; i < 7; i++) nb.push({ cx: W * (0.02 + 0.15 * i) + r() * 24, h: H * (0.07 + r() * 0.07), w: 20 + r() * 16 });
-        return { far: bumpLayer(farBase, bumps, W, 8), near: bumpLayer(nearBase, nb, W, 6), sharp: false };
-    }
-  }
-
-  function horizonSvg(landscapeId, seed, tall) {
-    var L = D.landscapes[landscapeId] || D.landscapes.kalahari;
-    var W = 400, H = tall ? 150 : 132;
-    var rnd = makeRandom(seed + 7);
-    var sil = silhouette(L.form, rnd, W, H);
-    var gid = 'sky-' + landscapeId + '-' + seed;
-    var sunX = W * (0.18 + rnd() * 0.6);
-    var sunY = H * 0.3;
-    var pathFn = sil.sharp ? linePath : smoothPath;
-
-    return '<svg class="horizon" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Horizontlinie ' + esc(L.label) + '">' +
-      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0" stop-color="' + L.skyTop + '"/>' +
-        '<stop offset="1" stop-color="' + L.skyBottom + '"/>' +
-      '</linearGradient></defs>' +
-      '<rect width="' + W + '" height="' + H + '" fill="url(#' + gid + ')"/>' +
-      '<circle cx="' + sunX.toFixed(1) + '" cy="' + sunY.toFixed(1) + '" r="' + (H * 0.135).toFixed(1) + '" fill="' + L.sun + '" opacity=".9"/>' +
-      '<path d="' + pathFn(sil.far, W, H) + '" fill="' + L.far + '"/>' +
-      '<path d="' + pathFn(sil.near, W, H) + '" fill="' + L.near + '"/>' +
-    '</svg>';
-  }
-
-  function dayHeader(d) {
-    return '<div class="bleed horizon-wrap">' +
-      horizonSvg(d.landscape, d.number, true) +
-      '<div class="horizon-cap">' +
-        '<div class="hc-num">' + d.number + '</div>' +
-        '<div class="hc-meta">' + esc(d.dateShort) + ' · ' + esc(d.weekday) + ' · ' + esc(D.landscapes[d.landscape].label) + '</div>' +
-      '</div></div>';
-  }
-
-  /* =========================================================================
-     4 · Karte — selbst gezeichnete SVG-Übersicht
+     3 · Karte — selbst gezeichnete SVG-Übersicht
      ====================================================================== */
 
   /* Grober Umriss Namibias, [Länge, Breite]. Nicht geodätisch exakt. */
@@ -378,8 +217,8 @@
   })();
 
   function mapSvg(selectedId) {
-    var pad = 14;
-    var vb = [-pad, -pad, MAP.w + pad * 2, MAP.h + pad * 2].map(function (n) { return n.toFixed(1); }).join(' ');
+    var padding = 14;
+    var vb = [-padding, -padding, MAP.w + padding * 2, MAP.h + padding * 2].map(function (n) { return n.toFixed(1); }).join(' ');
 
     var land = OUTLINE.map(function (p, i) {
       return (i ? 'L' : 'M') + MAP.x(p[0]).toFixed(1) + ' ' + MAP.y(p[1]).toFixed(1);
@@ -412,6 +251,129 @@
   }
 
   /* =========================================================================
+     4 · Bausteine des Designs
+     ====================================================================== */
+
+  function searchBtn(glass) {
+    return '<button class="roundbtn' + (glass ? ' glass' : '') + '" type="button" data-open-search aria-label="Suchen">' + icon('search') + '</button>';
+  }
+  function themeBtn(glass) {
+    return '<button class="roundbtn' + (glass ? ' glass' : '') + '" type="button" data-toggle-theme aria-label="Helles oder dunkles Thema">' +
+      icon(isDark() ? 'sun' : 'moon') + '</button>';
+  }
+
+  /* Große Überschrift der Reiter mit Suche und Thema */
+  function largeTitle(title, small) {
+    return '<div class="largetitle"><h1>' + (small ? '<small>' + esc(small) + '</small>' : '') + esc(title) + '</h1>' +
+      '<div class="btngroup">' + searchBtn(false) + themeBtn(false) + '</div></div>';
+  }
+
+  /* Fotokopf. o: { d, back, kicker, extra, title, sub, credit, withStats, parallax } */
+  function hero(o) {
+    var d = o.d;
+    return '<div class="hero' + (o.withStats ? ' withstats' : '') + '"' + (o.parallax ? ' id="parallax"' : '') +
+        ' style="background:' + esc(photoBg(d)) + '">' +
+      (d && d.image ? '<img src="' + esc(d.image) + '" alt="' + esc(photoAlt(d)) + '">' : '') +
+      '<div class="hero-top">' +
+        (o.back ? '<button class="roundbtn glass" type="button" data-back aria-label="Zurück">' + icon('back') + '</button>' : '<span></span>') +
+        '<div class="btngroup">' + searchBtn(true) + themeBtn(true) + '</div>' +
+      '</div>' +
+      (o.credit ? '<div class="credit">' + o.credit + '</div>' : '') +
+      '<div class="hero-body">' +
+        (o.kicker ? '<div class="kicker">' + o.kicker + '</div>' : '') +
+        (o.extra || '') +
+        (o.title ? '<h1>' + o.title + '</h1>' : '') +
+        (o.sub ? '<div class="sub">' + o.sub + '</div>' : '') +
+      '</div></div>';
+  }
+
+  function statsStrip(d) {
+    return '<div class="stats">' +
+      '<div class="stat"><small>' + icon('road') + 'Strecke</small><b>' + esc(d.distanceKm ? d.distanceKm + ' km' : '—') + '</b></div>' +
+      '<div class="stat"><small>' + icon('sunrise') + 'Aufgang</small><b>' + esc(d.sunrise) + '</b></div>' +
+      '<div class="stat"><small>' + icon('sunset') + 'Untergang</small><b>' + esc(d.sunset) + '</b></div>' +
+    '</div>';
+  }
+
+  /* Flug als Bordkarte */
+  function passHtml(f) {
+    var nextDay = f.arriveDate !== f.departDate;
+    return '<div class="pass">' +
+      '<div class="pass-top"><span>' + icon('plane') + esc(f.label) + '</span><span>' + esc(f.flightNo) + '</span></div>' +
+      '<div class="pass-route">' +
+        '<div><b>' + esc(f.from.code) + '</b><span>' + esc(f.from.city) + '</span></div>' +
+        '<div class="pass-line">' + icon('plane') + '</div>' +
+        '<div class="r"><b>' + esc(f.to.code) + '</b><span>' + esc(f.to.city) + '</span></div>' +
+      '</div>' +
+      '<div class="pass-cut"></div>' +
+      '<div class="pass-grid">' +
+        '<div><small>Datum</small><b>' + esc(shortDate(f.departDate)) + '</b></div>' +
+        '<div><small>Abflug</small><b>' + esc(f.departTime) + '</b></div>' +
+        '<div><small>Ankunft</small><b>' + esc(f.arriveTime) + (nextDay ? ' <span class="muted">+1</span>' : '') + '</b></div>' +
+        '<div><small>Airline</small><b>' + esc(f.airline.replace(' Airlines', '')) + '</b></div>' +
+      '</div></div>';
+  }
+
+  /* Unterkunft als Zeile; verlinkt auf die Detailseite */
+  function stayRow(s, note) {
+    return '<a class="stayrow" href="#/stay/' + esc(s.id) + '"><span class="stayicon">' + icon('stays') + '</span>' +
+      '<div class="stayrow-main"><b>' + esc(s.name) + '</b><span>' + esc(s.type) + ' · ' + esc(s.dateText) + (note ? ' · ' + esc(note) : '') + '</span>' +
+      stayChips(s) + '</div>' + icon('next', 'chev') + '</a>';
+  }
+
+  /* Fotokarte eines Tages mit der Unterkunft der Nacht */
+  function tcard(d) {
+    var s = d.accommodationId ? stay(d.accommodationId) : null;
+    var isToday = d.date === isoToday();
+    var meta = [];
+    if (d.distanceKm) meta.push(d.distanceKm + ' km');
+    if (d.driveTime) meta.push(d.driveTime);
+    meta.push(d.sunrise + ' – ' + d.sunset);
+
+    var out = '<article class="tcard">' +
+      '<a class="tcard-photo" href="#/day/' + d.id + '" style="background:' + esc(photoBg(d)) + '">' +
+        (d.image ? '<img src="' + esc(d.image) + '" alt="' + esc(photoAlt(d)) + '" loading="lazy">' : '') +
+        '<span class="daybadge"><b>' + d.number + '</b>' + esc(d.dateShort) + '</span>' +
+        (isToday ? '<span class="chip todaybadge">Heute</span>' : '') +
+        '<div class="tcard-cap"><h3>' + esc(d.title) + '</h3>' +
+          '<div class="tcard-meta">' + meta.map(function (m) { return '<span>' + esc(m) + '</span>'; }).join('') + '</div></div>' +
+      '</a>';
+    if (s) {
+      out += stayRow(s, d.accommodationNote);
+    } else {
+      out += '<div class="stayrow"><span class="stayicon">' + icon('plane') + '</span>' +
+        '<div class="stayrow-main"><b>Heimflug</b><span>' + esc(d.accommodationNote || 'keine Übernachtung') + '</span></div></div>';
+    }
+    return out + '</article>';
+  }
+
+  function ringHtml(done, total) {
+    var r = 38, c = 2 * Math.PI * r, pct = total ? done / total : 0;
+    return '<div class="ring" aria-hidden="true"><svg viewBox="0 0 86 86"><circle class="bgc" cx="43" cy="43" r="' + r + '"/>' +
+      '<circle class="fgc" cx="43" cy="43" r="' + r + '" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + (c * (1 - pct)).toFixed(1) + '"/></svg>' +
+      '<b>' + Math.round(pct * 100) + '%</b></div>';
+  }
+
+  function alarmsHtml(s) {
+    if (!s) return '';
+    var out = '';
+    if (s.drinkingWater === false) {
+      out += '<div class="alarm">' + icon('drop') + '<div>Kein Trinkwasser<small>Mit vollem Tank ankommen.' +
+        (s.id === 'twyfelfontein' ? ' Wasser gibt es nur für Duschen und Toiletten.' : '') + '</small></div></div>';
+    }
+    if (s.powerAtSite === false) {
+      out += '<div class="alarm">' + icon('plug') + '<div>Kein Strom am Stellplatz<small>' + esc(s.powerNote || 'Geräte vorher laden.') + '</small></div></div>';
+    }
+    return out;
+  }
+
+  function section(title, body, aside, cls) {
+    return '<div class="section' + (cls ? ' ' + cls : '') + '">' +
+      (title ? '<div class="section-head"><h2>' + esc(title) + '</h2>' + (aside ? '<span>' + esc(aside) + '</span>' : '') + '</div>' : '') +
+      body + '</div>';
+  }
+
+  /* =========================================================================
      5 · Ansichten
      ====================================================================== */
 
@@ -420,7 +382,8 @@
     manualDayId: load(STORE.manual, null),
     manualOpen: false,
     mapSel: D.accommodations[0].id,
-    packCat: D.packing.categories[0].id
+    packCat: D.packing.categories[0].id,
+    packFilter: 'alle'
   };
 
   /* --- Heute ---------------------------------------------------------- */
@@ -438,496 +401,353 @@
     return 'during';
   }
 
-  function todayCompact(d) {
-    var s = d.accommodationId ? stay(d.accommodationId) : null;
-    var out = '';
+  /* Vor der Reise: Countdown bis zum Hinflug auf dem Foto vom Deadvlei */
+  function todayBefore() {
+    var f = flight('outbound');
+    var left = daysBetween(isoToday(), f.departDate);
+    var h = day('d7') || D.days[0];
+    var out = hero({
+      d: h,
+      credit: creditShort(h),
+      kicker: 'Namibia 2026',
+      extra: left > 0 ? '<div class="countnum">' + left + '</div>' : '',
+      title: left > 0 ? (left === 1 ? 'Tag bis zum Abflug' : 'Tage bis zum Abflug') : 'Heute ist Abflug',
+      sub: esc(shortDate(f.departDate)) + ' · ' + esc(f.departTime) + ' Uhr ab ' + esc(f.from.city) + ' · ' + D.meta.days + ' Tage, rund 4.000 km'
+    });
 
-    out += '<div class="hero">' + dayHeaderPlain(d) +
-      '<div class="hero-body">' +
-        '<div class="hero-kicker">Tag ' + d.number + ' · ' + esc(d.dateShort) + '</div>' +
-        '<h2 class="hero-title">' + esc(d.title) + '</h2>' +
-        (d.distanceText ? '<p class="small muted">' + esc(d.distanceText) + (d.driveTime ? ' · ' + esc(d.driveTime) : '') + ' · ' + esc(d.roadType || '') + '</p>' : '') +
-      '</div>' +
-      '<div class="facts">' +
-        '<div class="fact"><div class="fact-label">' + icon('road') + 'Strecke</div><div class="fact-value">' + (d.distanceKm ? d.distanceKm + ' km' : '—') + '</div></div>' +
-        '<div class="fact"><div class="fact-label">' + icon('sunrise') + 'Aufgang</div><div class="fact-value">' + esc(d.sunrise) + '</div></div>' +
-        '<div class="fact"><div class="fact-label">' + icon('sunset') + 'Untergang</div><div class="fact-value">' + esc(d.sunset) + '</div></div>' +
-      '</div>' +
+    var pk = packingStats();
+    out += '<div class="content">' +
+      section('Euer Hinflug', passHtml(f), null, 'first') +
+      section(null, '<a class="card ringcard" href="#/packing">' + ringHtml(pk.done, pk.total) +
+        '<div style="flex:1 1 auto;min-width:0"><h3>Packliste</h3><p>' +
+          (pk.total === 0 ? 'Noch leer' : (pk.done === pk.total ? 'Alles eingepackt' : pk.done + ' von ' + pk.total + ' eingepackt')) +
+        '</p></div>' + icon('next', 'chev') + '</a>') +
+      section('Die Route', '<div class="strip">' + D.days.map(function (x) {
+        return '<a href="#/day/' + x.id + '" style="background:' + esc(photoBg(x)) + '">' +
+          (x.image ? '<img src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+          '<div><small>Tag ' + x.number + '</small><b>' + esc(x.to) + '</b></div></a>';
+      }).join('') + '</div>', D.days.length + ' Tage') +
     '</div>';
+    return out;
+  }
 
-    /* Warnungen des Tages */
-    var alarms = [];
-    if (s && s.drinkingWater === false) alarms.push({ t: 'Kein Trinkwasser', s: s.name + ' — mit vollem Tank ankommen' });
-    if (s && s.powerAtSite === false) alarms.push({ t: 'Kein Strom am Stellplatz', s: s.powerNote || s.name });
-    if (alarms.length) {
-      out += '<div class="section">' + alarms.map(function (a) {
-        return '<div class="alarm">' + icon('warn') + '<div>' + esc(a.t) + '<small>' + esc(a.s) + '</small></div></div>';
-      }).join('') + '</div>';
-    }
+  /* Während der Reise (oder manuell gewählt): das Wichtigste des Tages */
+  function todayDay(d, manual) {
+    var s = d.accommodationId ? stay(d.accommodationId) : null;
+    var out = hero({
+      d: d,
+      withStats: true,
+      credit: creditShort(d),
+      kicker: (manual ? 'Gewählter Tag' : 'Heute') + ' · Tag ' + d.number + ' von ' + D.days.length,
+      title: esc(d.title),
+      sub: esc(d.dateShort) + (d.driveTime ? ' · ' + esc(d.driveTime) + ' Fahrt' : '')
+    }) + statsStrip(d);
 
-    var danger = (d.notes || []).filter(function (n) { return n.level === 'danger' || n.level === 'warn'; });
-    if (danger.length) {
-      out += '<div class="section"><div class="section-title">Wichtig heute</div>' + notesHtml(danger) + '</div>';
-    }
+    out += '<div class="content">';
+
+    var alarms = alarmsHtml(s);
+    if (alarms) out += section(null, alarms, null, 'first');
+
+    var important = (d.notes || []).filter(function (n) { return n.level === 'danger' || n.level === 'warn'; });
+    if (important.length) out += section('Wichtig heute', notesHtml(important), null, alarms ? '' : 'first');
 
     var fl = flightsForDay(d);
-    if (fl.length) {
-      out += '<div class="section"><div class="section-title">Flug heute</div>' + fl.map(flightCard).join('') + '</div>';
-    }
+    if (fl.length) out += section('Flug heute', fl.map(passHtml).join(''));
 
-    if (s) {
-      out += '<div class="section"><div class="section-title">Heutige Unterkunft</div>' + stayCard(s, d.accommodationNote) + '</div>';
-    } else {
-      out += '<div class="section"><div class="section-title">Übernachtung</div><div class="card"><div class="card-body small">' + esc(d.accommodationNote || '—') + '</div></div></div>';
-    }
+    out += section('Heute Nacht', s
+      ? '<div class="card">' + stayRow(s, d.accommodationNote) + '</div>'
+      : '<div class="card card-body small">' + esc(d.accommodationNote || '—') + '</div>');
 
-    out += '<div class="section"><a class="btn btn-primary btn-block" href="#/day/' + d.id + '">' + icon('days') + '<span>Ganzen Tag ansehen</span></a></div>';
+    out += section(null, '<a class="card row" href="#/day/' + d.id + '">' + icon('days') +
+      '<div class="row-main"><b>Ganzen Tag ansehen</b><span>Programm, Ablauf, Orte und Hinweise</span></div>' + icon('next', 'chev') + '</a>');
+
+    var next = D.days[d.number];
+    if (next) out += section('Morgen', tcard(next));
+    return out + '</div>';
+  }
+
+  /* Nach der Reise: Rückblick */
+  function todayAfter() {
+    var last = D.days[D.days.length - 1];
+    var out = hero({
+      d: last,
+      credit: creditShort(last),
+      kicker: 'Rückblick',
+      title: esc(D.meta.title),
+      sub: esc(D.meta.subtitle) + ' · ' + D.meta.days + ' Tage · ' + D.accommodations.length + ' Stationen'
+    });
+    out += '<div class="content">' +
+      section(null, '<div class="card card-body small muted">Die Reise ist vorbei. Alle Tage, Unterkünfte und Orte bleiben hier vollständig erhalten.</div>', null, 'first') +
+      section('Alle Tage', D.days.map(tcard).join('')) +
+    '</div>';
     return out;
   }
 
-  function dayHeaderPlain(d) {
-    return '<div class="horizon-wrap">' + horizonSvg(d.landscape, d.number, false) + '</div>';
-  }
-
-  function viewToday() {
-    var phase = tripPhase();
-    var out = '';
-    var shown = null;
-
-    if (state.manualDayId) {
-      shown = day(state.manualDayId);
-    }
-
-    if (!shown) {
-      if (phase === 'during') {
-        shown = currentDay();
-      }
-    }
-
-    /* Kopf je nach Reisephase */
-    if (!state.manualDayId && phase === 'before') {
-      /* Countdown bis zum Hinflug, nicht bis Tag 1 */
-      var outbound = flight('outbound');
-      var left = daysBetween(isoToday(), outbound.departDate);
-      var d1 = D.days[0];
-      out += '<div class="section"><div class="hero">' + dayHeaderPlain(d1) +
-        '<div class="hero-body">' +
-          '<div class="hero-kicker">' + esc(D.meta.title) + '</div>' +
-          (left > 0
-            ? '<div class="countdown"><span class="countdown-num">' + left + '</span>' +
-              '<span class="countdown-lab">' + (left === 1 ? 'Tag bis zum Abflug' : 'Tage bis zum Abflug') + '</span></div>'
-            : '<div class="countdown"><span class="countdown-lab">Heute ist Abflug</span></div>') +
-          '<p class="small muted">Abflug am ' + esc(formatDate(outbound.departDate)) + ' um ' + esc(outbound.departTime) + ' Uhr ab ' + esc(outbound.from.city) + '. ' +
-            esc(D.meta.subtitle) + ', ' + D.meta.days + ' Tage, ' + D.meta.nights + ' Nächte.</p>' +
-        '</div></div></div>';
-
-      out += '<div class="section"><div class="section-title">Hinflug</div>' + flightCard(outbound) + '</div>';
-
-      var pk = packingStats();
-      out += '<div class="section">' +
-        '<a class="card" href="#/packing"><div class="card-body" style="display:flex;align-items:center;gap:12px">' +
-          icon('bag') +
-          '<div style="flex:1 1 auto;min-width:0"><b>Packliste</b><div class="small muted">' +
-            (pk.total === 0 ? 'Noch leer' : (pk.done === pk.total ? 'Alles eingepackt' : pk.done + ' von ' + pk.total + ' eingepackt')) +
-          '</div></div>' + icon('next', 'ic-chev') +
-        '</div></a></div>';
-
-      out += '<div class="section"><div class="section-title">Vorschau auf Tag 1</div>' + dayCardHtml(d1, false) + '</div>';
-
-    } else if (!state.manualDayId && phase === 'after') {
-      out += '<div class="section"><div class="hero">' + dayHeaderPlain(D.days[D.days.length - 1]) +
-        '<div class="hero-body">' +
-          '<div class="hero-kicker">Rückblick</div>' +
-          '<h2 class="hero-title">' + esc(D.meta.title) + '</h2>' +
-          '<p class="small muted">' + esc(D.meta.subtitle) + ' · ' + D.meta.days + ' Tage · ' + D.meta.nights + ' Nächte · rund 4.000 km · ' +
-            D.accommodations.length + ' Stationen.</p>' +
-          '<p class="small muted">Die Reise ist vorbei. Alle Tage, Unterkünfte und Orte bleiben hier vollständig erhalten.</p>' +
-        '</div></div></div>';
-      out += '<div class="section"><div class="section-title">Alle Tage</div>' +
-        D.days.map(function (d) { return dayCardHtml(d, false); }).join('') + '</div>';
-
-    } else if (shown) {
-      if (state.manualDayId) {
-        out += '<div class="section"><div class="note note-info">' + icon('info') +
-          '<div>Manuell gewählter Tag. <b>Tag ' + shown.number + '</b> — ' + esc(shown.dateShort) + '.</div></div></div>';
-      }
-      out += '<div class="section">' + todayCompact(shown) + '</div>';
-    } else {
-      out += '<div class="section"><div class="card"><div class="card-body">Für heute ist kein Reisetag hinterlegt.</div></div></div>';
-    }
-
-    /* Schalter „Tag manuell wählen“ */
-    out += '<div class="section"><div class="card">' +
-      '<button class="linkrow" type="button" data-toggle-manual>' +
-        icon('clock') +
-        '<div class="linkrow-main"><b>Tag manuell wählen</b><span>' +
-          (state.manualDayId ? 'Aktiv: Tag ' + day(state.manualDayId).number : 'Aus — es gilt das Systemdatum') +
-        '</span></div>' + icon('next', 'ic-chev') +
-      '</button>' +
-      (state.manualOpen ? manualPicker() : '') +
-      (state.manualDayId ? '<button class="linkrow" type="button" data-clear-manual>' + icon('close') +
-        '<div class="linkrow-main"><b>Zurück auf heute</b><span>Systemdatum verwenden</span></div></button>' : '') +
-    '</div></div>';
-
-    return out;
-  }
-
-  function manualPicker() {
-    return '<div style="padding:12px 14px;border-top:1px solid var(--line-soft)">' +
-      '<select class="input" data-manual-select aria-label="Tag wählen">' +
-        '<option value="">— Tag wählen —</option>' +
+  function manualBlock() {
+    var cur = state.manualDayId ? day(state.manualDayId) : null;
+    var out = '<div class="card">' +
+      '<button class="row" type="button" data-toggle-manual>' + icon('clock') +
+        '<div class="row-main"><b>Tag manuell wählen</b><span>' +
+          (cur ? 'Aktiv: Tag ' + cur.number : 'Aus · es gilt das Systemdatum') + '</span></div>' + icon('next', 'chev') +
+      '</button>';
+    if (state.manualOpen) {
+      out += '<div class="picker"><select class="select" data-manual-select aria-label="Tag wählen">' +
+        '<option value="">Tag wählen</option>' +
         D.days.map(function (d) {
           return '<option value="' + d.id + '"' + (d.id === state.manualDayId ? ' selected' : '') + '>Tag ' + d.number + ' · ' + esc(d.dateShort) + ' · ' + esc(d.title) + '</option>';
         }).join('') +
       '</select></div>';
-  }
-
-  /* --- Tage ----------------------------------------------------------- */
-
-  function dayCardHtml(d, markToday) {
-    var t = isoToday();
-    var isToday = markToday !== false && d.date === t;
-    var s = d.accommodationId ? stay(d.accommodationId) : null;
-    var warn = '';
-    if (s && s.drinkingWater === false) warn += '<span class="chip chip-danger">kein Wasser</span> ';
-    if (s && s.powerAtSite === false) warn += '<span class="chip chip-danger">kein Strom</span> ';
-
-    return '<a class="card daycard' + (isToday ? ' is-today' : '') + '" href="#/day/' + d.id + '">' +
-      '<div class="daycard-num"><b>' + d.number + '</b><span>' + (isToday ? 'heute' : 'Tag') + '</span></div>' +
-      '<div class="daycard-main">' +
-        '<div class="daycard-date">' + esc(d.dateShort) + ' · ' + esc(d.weekday) + '</div>' +
-        '<div class="daycard-title">' + esc(d.title) + '</div>' +
-        '<div class="daycard-meta">' +
-          (d.distanceKm ? '<span>' + d.distanceKm + ' km</span>' : '') +
-          (d.driveTime ? '<span>' + esc(d.driveTime) + '</span>' : '') +
-          '<span>' + esc(d.sunrise) + ' – ' + esc(d.sunset) + '</span>' +
-        '</div>' +
-        (warn ? '<div style="margin-top:6px">' + warn + '</div>' : '') +
-      '</div></a>';
-  }
-
-  /* --- Unsere Reise: Zeitleiste aus Flügen, Tagen und Unterkünften ----- */
-
-  /* Tageskarte mit der Unterkunft als zweiter Zeile. Zwei getrennte Links,
-     weil ein Link nicht in einem anderen stecken darf. */
-  function tripDayCard(d) {
-    var isToday = d.date === isoToday();
-    var s = d.accommodationId ? stay(d.accommodationId) : null;
-
-    var out = '<div class="card tripcard' + (isToday ? ' is-today' : '') + '">' +
-      '<a class="tripcard-day" href="#/day/' + d.id + '">' +
-        '<div class="daycard-num"><b>' + d.number + '</b><span>' + (isToday ? 'heute' : 'Tag') + '</span></div>' +
-        '<div class="daycard-main">' +
-          '<div class="daycard-date">' + esc(d.dateShort) + ' · ' + esc(d.weekday) + '</div>' +
-          '<div class="daycard-title">' + esc(d.title) + '</div>' +
-          '<div class="daycard-meta">' +
-            (d.distanceKm ? '<span>' + d.distanceKm + ' km</span>' : '') +
-            (d.driveTime ? '<span>' + esc(d.driveTime) + '</span>' : '') +
-            '<span>' + esc(d.sunrise) + ' – ' + esc(d.sunset) + '</span>' +
-          '</div>' +
-        '</div></a>';
-
-    if (s) {
-      var chips = statusChip(s.status, D.statuses[s.status].label);
-      if (s.drinkingWater === false) chips += '<span class="chip chip-danger">kein Trinkwasser</span>';
-      if (s.powerAtSite === false) chips += '<span class="chip chip-danger">kein Strom</span>';
-      out += '<a class="linkrow" href="#/stay/' + esc(s.id) + '">' + icon('stays') +
-        '<div class="linkrow-main"><b>' + esc(s.name) + '</b>' +
-          '<span>' + esc(s.type) + (d.accommodationNote ? ' · ' + esc(d.accommodationNote) : '') + '</span>' +
-          '<div class="chips">' + chips + '</div></div>' +
-        icon('next', 'ic-chev') + '</a>';
-    } else {
-      out += '<div class="linkrow" style="cursor:default">' + icon('stays') +
-        '<div class="linkrow-main"><span>' + esc(d.accommodationNote || 'keine Übernachtung') + '</span></div></div>';
+    }
+    if (cur) {
+      out += '<button class="row" type="button" data-clear-manual>' + icon('close') +
+        '<div class="row-main"><b>Zurück auf heute</b><span>Systemdatum verwenden</span></div></button>';
     }
     return out + '</div>';
   }
 
+  function viewToday() {
+    var phase = tripPhase();
+    var shown = state.manualDayId ? day(state.manualDayId) : null;
+    var manual = !!shown;
+    if (!shown && phase === 'during') shown = currentDay();
+
+    var out;
+    if (shown) out = todayDay(shown, manual);
+    else if (phase === 'before') out = todayBefore();
+    else if (phase === 'after') out = todayAfter();
+    else out = '<div class="content top">' + largeTitle('Heute') + '<div class="card card-body">Für heute ist kein Reisetag hinterlegt.</div></div>';
+
+    return out + '<div class="content">' + section(null, manualBlock()) + '</div>';
+  }
+
+  /* --- Unsere Reise --------------------------------------------------- */
+
   function viewTrip() {
-    var out = '<div class="section"><div class="section-title">' + D.meta.days + ' Tage · ' + esc(D.meta.subtitle) + '</div>' +
-      flightCard(flight('outbound')) +
-      D.days.map(tripDayCard).join('') +
-      flightCard(flight('return')) +
-    '</div>';
-
-    out += '<div class="section"><div class="section-title">Buchungsstand</div><div class="card"><div class="card-body">' +
+    var out = '<div class="content top">' + largeTitle('Unsere Reise', '19.10. – 05.11.2026') + passHtml(flight('outbound'));
+    D.regions.forEach(function (r) {
+      out += '<div class="region"><b>' + esc(r.label) + '</b><span></span><small>Tag ' + r.from + (r.to !== r.from ? '–' + r.to : '') + '</small></div>';
+      for (var n = r.from; n <= r.to; n++) out += tcard(D.days[n - 1]);
+    });
+    out += '<div class="region"><b>Heimflug</b><span></span></div>' + passHtml(flight('return'));
+    out += section('Buchungsstand', '<div class="card card-body">' +
       '<p class="strong">' + esc(D.bookingOverview.summary) + '</p>' +
-      '<p class="small muted">' + esc(D.bookingOverview.note) + '</p>' +
-    '</div></div></div>';
-    return out;
+      '<p class="small muted">' + esc(D.bookingOverview.note) + '</p></div>');
+    return out + '</div>';
   }
 
-  function viewDay(id) {
-    var d = day(id);
-    if (!d) return '<div class="section"><p>Tag nicht gefunden.</p></div>';
-    var s = d.accommodationId ? stay(d.accommodationId) : null;
-    var out = dayHeader(d);
-
-    out += '<div class="section detail-head">' +
-      '<h2 class="detail-title">' + esc(d.title) + '</h2>' +
-      '<div class="detail-sub">' + esc(formatDate(d.date)) + '</div>' +
-    '</div>';
-
-    var roadLine = [];
-    if (d.driveTime) roadLine.push(d.driveTime);
-    if (d.roadType) roadLine.push(d.roadType);
-
-    out += '<div class="section"><div class="card"><div class="facts" style="border-top:0">' +
-      '<div class="fact"><div class="fact-label">' + icon('road') + 'Strecke</div><div class="fact-value">' + esc(d.distanceText || '—') + '</div></div>' +
-      '<div class="fact"><div class="fact-label">' + icon('sunrise') + 'Aufgang</div><div class="fact-value">' + esc(d.sunrise) + '</div></div>' +
-      '<div class="fact"><div class="fact-label">' + icon('sunset') + 'Untergang</div><div class="fact-value">' + esc(d.sunset) + '</div></div>' +
-    '</div>' +
-    (roadLine.length ? '<div class="card-body small muted" style="border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:flex-start">' +
-        icon('car') + '<span>' + esc(roadLine.join(' · ')) + '</span></div>' : '') +
-    '</div></div>';
-
-    /* Flug an diesem Tag (Ankunft an Tag 1, Abflug an Tag 18) */
-    var fl = flightsForDay(d);
-    if (fl.length) {
-      out += '<div class="section"><div class="section-title">Flug</div>' + fl.map(flightCard).join('') + '</div>';
-    }
-
-    /* Programm */
-    out += '<div class="section prose">' + (d.program || []).map(function (p, i) {
-      return '<p' + (i === 0 ? ' class="lead"' : '') + '>' + esc(p) + '</p>';
-    }).join('');
-
-    if (d.options && d.options.length) {
-      out += '<div class="stack" style="margin-top:6px">' + d.options.map(function (o) {
-        return '<div class="card"><div class="card-body"><b>' + esc(o.title) + '</b><div class="small">' + esc(o.text) + '</div></div></div>';
-      }).join('') + '</div>';
-    }
-    if (d.programAfter) {
-      out += d.programAfter.map(function (p) { return '<p style="margin-top:12px">' + esc(p) + '</p>'; }).join('');
-    }
-    out += '</div>';
-
-    /* Zeitplan (Tag 18) */
-    if (d.schedule) {
-      out += '<div class="section"><div class="section-title">Ablauf</div><div class="card"><div class="tablewrap"><table class="data">' +
-        '<thead><tr><th>Zeit</th><th>Schritt</th></tr></thead><tbody>' +
-        d.schedule.map(function (r) { return '<tr><td class="strong">' + esc(r.time) + '</td><td>' + esc(r.step) + '</td></tr>'; }).join('') +
-        '</tbody></table></div></div></div>';
-    }
-
-    /* Hinweise */
-    if (d.notes && d.notes.length) {
-      out += '<div class="section"><div class="section-title">Hinweise</div>' + notesHtml(d.notes) + '</div>';
-    }
-
-    /* Unterkunft */
-    out += '<div class="section"><div class="section-title">Unterkunft</div>';
-    out += s ? stayCard(s, d.accommodationNote)
-             : '<div class="card"><div class="card-body small">' + esc(d.accommodationNote || '—') + '</div></div>';
-    out += '</div>';
-
-    /* Orte */
-    if (d.placeIds && d.placeIds.length) {
-      out += '<div class="section"><div class="section-title">Orte an diesem Tag</div><div class="card">' +
-        d.placeIds.map(function (pid) {
-          var p = place(pid);
-          return '<a class="linkrow" href="#/map/' + esc(p.id) + '">' + icon('pin') +
-            '<div class="linkrow-main"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span></div>' +
-            icon('next', 'ic-chev') + '</a>';
-        }).join('') + '</div></div>';
-    }
-
-    /* Aktivitäten */
-    if (d.activityIds && d.activityIds.length) {
-      out += '<div class="section"><div class="section-title">Aktivitäten</div><div class="card">' +
-        d.activityIds.map(function (aid) { return activityRow(act(aid)); }).join('') + '</div></div>';
-    }
-
-    /* Blättern */
-    var prev = D.days[d.number - 2], next = D.days[d.number];
-    out += '<div class="section pager">' +
-      (prev ? '<a class="btn" href="#/day/' + prev.id + '">' + icon('back') + '<span>Tag ' + prev.number + '</span></a>'
-            : '<span class="btn" style="opacity:.35">' + icon('back') + '<span>—</span></span>') +
-      (next ? '<a class="btn" href="#/day/' + next.id + '"><span>Tag ' + next.number + '</span>' + icon('next') + '</a>'
-            : '<span class="btn" style="opacity:.35"><span>—</span>' + icon('next') + '</span>') +
-    '</div><p class="swipe-hint">Wischen blättert zwischen den Tagen</p>';
-
-    return out;
-  }
+  /* --- Tag ------------------------------------------------------------ */
 
   function activityRow(a) {
     if (!a) return '';
     var meta = [];
     if (a.price) meta.push(a.price);
     if (a.dayText) meta.push('Tag ' + a.dayText);
-    return '<div class="linkrow" style="cursor:default">' + icon(a.bookAhead ? 'ticket' : 'check') +
-      '<div class="linkrow-main"><b>' + esc(a.name) + '</b>' +
-        '<span>' + esc(meta.join(' · ')) + (a.note ? (meta.length ? ' — ' : '') + esc(a.note) : '') + '</span></div>' +
+    return '<div class="row static">' + icon(a.bookAhead ? 'ticket' : 'check') +
+      '<div class="row-main"><b>' + esc(a.name) + '</b>' +
+        '<span>' + esc(meta.join(' · ')) + (a.note ? (meta.length ? ' · ' : '') + esc(a.note) : '') + '</span></div>' +
       (a.bookAhead ? '<span class="chip chip-warn">vorab</span>' : '') +
     '</div>';
   }
 
-  /* --- Unterkünfte ---------------------------------------------------- */
+  function viewDay(id) {
+    var d = day(id);
+    if (!d) return '<div class="content top">' + largeTitle('Tag') + '<p>Tag nicht gefunden.</p></div>';
+    var s = d.accommodationId ? stay(d.accommodationId) : null;
 
-  function stayCard(s, note) {
-    var warn = '';
-    if (s.drinkingWater === false) warn += '<span class="chip chip-danger">kein Trinkwasser</span> ';
-    if (s.powerAtSite === false) warn += '<span class="chip chip-danger">kein Strom</span> ';
+    var out = hero({
+      d: d,
+      back: true,
+      withStats: true,
+      parallax: true,
+      kicker: 'Tag ' + d.number + ' · ' + esc(d.dateShort) + ' · ' + esc(d.weekday),
+      title: esc(d.title)
+    }) + statsStrip(d) + '<p class="photocredit">' + creditLong(d) + '</p>';
 
-    return '<a class="card" href="#/stay/' + esc(s.id) + '"><div class="card-body">' +
-      '<div style="display:flex;align-items:flex-start;gap:10px">' +
-        '<div style="flex:1 1 auto;min-width:0">' +
-          '<b style="font-size:1.05rem">' + esc(s.name) + '</b>' +
-          '<div class="small muted">' + esc(s.type) + ' · ' + esc(s.dateText) + (note ? ' · ' + esc(note) : '') + '</div>' +
-        '</div>' + icon('next', 'ic-chev') +
-      '</div>' +
-      '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">' +
-        statusChip(s.status, D.statuses[s.status].label) + warn +
-      '</div>' +
-    '</div></a>';
+    out += '<div class="content">';
+
+    var alarms = alarmsHtml(s);
+    if (alarms) out += section(null, alarms, null, 'first');
+
+    if (d.driveTime || d.roadType) {
+      out += section(null, '<div class="pills">' +
+        (d.driveTime ? '<span class="pill">' + icon('car') + esc(d.driveTime) + '</span>' : '') +
+        (d.roadType ? '<span class="pill">' + icon('road') + esc(d.roadType) + '</span>' : '') +
+      '</div>', null, 'first');
+    }
+
+    var prose = (d.program || []).map(function (p, i) {
+      return '<p' + (i === 0 ? ' class="lead"' : '') + '>' + esc(p) + '</p>';
+    }).join('');
+    if (d.options && d.options.length) {
+      prose += d.options.map(function (o) {
+        return '<div class="card card-body"><b>' + esc(o.title) + '</b><div class="small muted" style="margin-top:3px">' + esc(o.text) + '</div></div>';
+      }).join('');
+    }
+    if (d.programAfter) prose += d.programAfter.map(function (p) { return '<p style="margin-top:14px">' + esc(p) + '</p>'; }).join('');
+    out += '<div class="section prose">' + prose + '</div>';
+
+    var fl = flightsForDay(d);
+    if (fl.length) out += section('Flug', fl.map(passHtml).join(''));
+
+    if (d.schedule) {
+      out += section('Ablauf', '<div class="card" style="padding:12px 16px 12px 8px">' +
+        d.schedule.map(function (r) {
+          return '<div class="sched-item"><div class="sched-time">' + esc(r.time) + '</div><div class="sched-dot"></div><div class="sched-step">' + esc(r.step) + '</div></div>';
+        }).join('') + '</div>');
+    }
+
+    if (d.notes && d.notes.length) out += section('Hinweise', notesHtml(d.notes));
+
+    out += section('Unterkunft', s
+      ? '<div class="card">' + stayRow(s, d.accommodationNote) + '</div>'
+      : '<div class="card card-body small">' + esc(d.accommodationNote || '—') + '</div>');
+
+    if (d.placeIds && d.placeIds.length) {
+      out += section('Orte an diesem Tag', '<div class="card">' + d.placeIds.map(function (pid) {
+        var p = place(pid);
+        return p ? '<a class="row" href="#/map/' + esc(p.id) + '">' + icon('pin') +
+          '<div class="row-main"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span></div>' + icon('next', 'chev') + '</a>' : '';
+      }).join('') + '</div>');
+    }
+
+    if (d.activityIds && d.activityIds.length) {
+      out += section('Aktivitäten', '<div class="card">' + d.activityIds.map(function (aid) { return activityRow(act(aid)); }).join('') + '</div>');
+    }
+
+    /* Blättern mit Fotovorschau */
+    var prev = D.days[d.number - 2], next = D.days[d.number];
+    function pagerLink(x, label, right) {
+      return '<a href="#/day/' + x.id + '" style="background:' + esc(photoBg(x)) + '">' +
+        (x.image ? '<img src="' + esc(x.image) + '" alt="" loading="lazy">' : '') +
+        '<div' + (right ? ' class="r"' : '') + '><small>' + label + '</small><b>' + esc(x.to) + '</b></div></a>';
+    }
+    out += '<div class="section"><div class="pager">' +
+      (prev ? pagerLink(prev, '‹ Tag ' + prev.number, false) : '<span></span>') +
+      (next ? pagerLink(next, 'Tag ' + next.number + ' ›', true) : '<span></span>') +
+    '</div><p class="swipe-hint">Wischen blättert zwischen den Tagen</p></div>';
+
+    return out + '</div>';
   }
+
+  /* --- Unterkunft ----------------------------------------------------- */
 
   function viewStay(id) {
     var s = stay(id);
-    if (!s) return '<div class="section"><p>Unterkunft nicht gefunden.</p></div>';
-    var out = '';
+    if (!s) return '<div class="content top">' + largeTitle('Unterkunft') + '<p>Unterkunft nicht gefunden.</p></div>';
+    var relDays = D.days.filter(function (d) { return d.accommodationId === s.id; });
+    var d0 = relDays[0] || null;
 
-    out += '<div class="section detail-head">' +
-      '<h2 class="detail-title">' + esc(s.name) + '</h2>' +
-      '<div class="detail-sub">' + esc(s.type) + ' · ' + esc(s.dateText) + ' · Tag ' + s.dayNumbers.join(' und ') + (s.group ? ' · ' + esc(s.group) : '') + '</div>' +
-      '<div style="margin-top:8px">' + statusChip(s.status, s.statusText) + '</div>' +
-    '</div>';
+    /* Als Foto dient das Bild des ersten Tages an dieser Station */
+    var out = hero({
+      d: d0,
+      back: true,
+      credit: creditShort(d0),
+      kicker: esc(s.type) + ' · ' + esc(s.dateText) + ' · Tag ' + s.dayNumbers.join(' und '),
+      title: esc(s.name)
+    });
 
-    /* Die praktisch wichtigsten Warnungen — groß und unübersehbar */
-    if (s.drinkingWater === false) {
-      out += '<div class="section"><div class="alarm">' + icon('drop') +
-        '<div>Kein Trinkwasser<small>Mit vollem Tank ankommen.' + (s.id === 'twyfelfontein' ? ' Wasser gibt es nur für Duschen und Toiletten.' : '') + '</small></div></div></div>';
-    }
-    if (s.powerAtSite === false) {
-      out += '<div class="section"><div class="alarm">' + icon('plug') +
-        '<div>Kein Strom am Stellplatz<small>' + esc(s.powerNote || 'Geräte vorher laden.') + '</small></div></div></div>';
-    }
+    out += '<div class="content">';
+    out += section(null, '<div class="chips">' + statusChip(s.status, s.statusText) +
+      (s.group ? '<span class="chip chip-plain">' + esc(s.group) + '</span>' : '') + '</div>', null, 'first');
+
+    var alarms = alarmsHtml(s);
+    if (alarms) out += section(null, alarms);
 
     if (s.intro) out += '<div class="section prose"><p class="lead">' + esc(s.intro) + '</p></div>';
 
     /* Kontakt und Referenz */
     var rows = '';
     if (s.phone) {
-      rows += '<a class="linkrow" href="tel:' + esc(s.phone.replace(/\s/g, '')) + '">' + icon('phone') +
-        '<div class="linkrow-main"><b>Anrufen</b><span>' + esc(s.phone) + '</span></div>' + icon('next', 'ic-chev') + '</a>';
+      rows += '<a class="row" href="tel:' + esc(s.phone.replace(/\s/g, '')) + '">' + icon('phone') +
+        '<div class="row-main"><b>Anrufen</b><span>' + esc(s.phone) + '</span></div>' + icon('next', 'chev') + '</a>';
     }
     if (s.email) {
-      rows += '<a class="linkrow" href="mailto:' + esc(s.email) + '">' + icon('mail') +
-        '<div class="linkrow-main"><b>Mail schreiben</b><span>' + esc(s.email) + '</span></div>' + icon('next', 'ic-chev') + '</a>';
+      rows += '<a class="row" href="mailto:' + esc(s.email) + '">' + icon('mail') +
+        '<div class="row-main"><b>Mail schreiben</b><span>' + esc(s.email) + '</span></div>' + icon('next', 'chev') + '</a>';
     }
     if (s.contact) {
-      rows += '<div class="linkrow" style="cursor:default">' + icon('info') +
-        '<div class="linkrow-main"><b>Ansprechpartner</b><span>' + esc(s.contact) + '</span></div></div>';
+      rows += '<div class="row static">' + icon('info') + '<div class="row-main"><b>Ansprechpartner</b><span>' + esc(s.contact) + '</span></div></div>';
     }
     if (s.reception) {
-      rows += '<div class="linkrow" style="cursor:default">' + icon('clock') +
-        '<div class="linkrow-main"><b>Rezeption</b><span>' + esc(s.reception) + '</span></div></div>';
+      rows += '<div class="row static">' + icon('clock') + '<div class="row-main"><b>Rezeption</b><span>' + esc(s.reception) + '</span></div></div>';
     }
     if (s.address) {
-      rows += '<div class="linkrow" style="cursor:default">' + icon('pin') +
-        '<div class="linkrow-main"><b>Adresse</b><span>' + esc(s.address) + '</span></div></div>';
+      rows += '<div class="row static">' + icon('pin') + '<div class="row-main"><b>Adresse</b><span>' + esc(s.address) + '</span></div></div>';
     }
     if (s.reference) {
-      rows += '<button class="linkrow" type="button" data-copy="' + esc(s.reference) + '" data-copy-label="Referenz">' + icon('copy') +
-        '<div class="linkrow-main"><b>Referenznummer</b><span>' + esc(s.reference) +
-        (s.ownReference ? ' · eigene Referenz: ' + esc(s.ownReference) : '') + '</span></div>' + icon('copy', 'ic-chev') + '</button>';
+      rows += '<button class="row" type="button" data-copy="' + esc(s.reference) + '" data-copy-label="Referenz">' + icon('copy') +
+        '<div class="row-main"><b>Referenznummer</b><span>' + esc(s.reference) +
+        (s.ownReference ? ' · eigene Referenz: ' + esc(s.ownReference) : '') + '</span></div>' + icon('copy', 'chev') + '</button>';
     }
-    if (rows) out += '<div class="section"><div class="section-title">Kontakt</div><div class="card">' + rows + '</div></div>';
-
-    /* Koordinaten */
-    out += '<div class="section"><div class="section-title">Koordinaten</div><div class="card"><div class="card-body">' +
-      '<div class="coord">' + esc(coordText(s.lat, s.lon)) + '</div>' +
-      '<div style="margin-top:10px">' + geoLinks(s.lat, s.lon, s.name) + '</div>' +
-    '</div></div></div>';
-
-    /* Ausstattung und Details */
-    if (s.details && s.details.length) {
-      out += '<div class="section"><div class="section-title">Im Detail</div><div class="card"><div class="card-body">' +
-        '<dl class="dl">' + s.details.map(function (x) {
-          return '<div><dt>' + esc(x.label) + '</dt><dd>' + esc(x.text) + '</dd></div>';
-        }).join('') + '</dl></div></div></div>';
-    }
+    if (rows) out += section('Kontakt', '<div class="card">' + rows + '</div>');
 
     /* Kennzahlen */
-    out += '<div class="section"><div class="card"><div class="facts" style="border-top:0">' +
-      '<div class="fact"><div class="fact-label">' + icon('drop') + 'Trinkwasser</div><div class="fact-value" style="color:' + (s.drinkingWater ? 'var(--success)' : 'var(--danger)') + '">' + (s.drinkingWater ? 'ja' : 'nein') + '</div></div>' +
-      '<div class="fact"><div class="fact-label">' + icon('plug') + 'Strom am Platz</div><div class="fact-value" style="color:' + (s.powerAtSite ? 'var(--success)' : 'var(--danger)') + '">' + (s.powerAtSite ? 'ja' : 'nein') + '</div></div>' +
-      (s.price ? '<div class="fact"><div class="fact-label">' + icon('coins') + 'Preis</div><div class="fact-value" style="font-size:.92rem">' + esc(s.price) + '</div></div>' : '') +
-      (s.rating ? '<div class="fact"><div class="fact-label">' + icon('check') + 'Bewertung</div><div class="fact-value" style="font-size:.92rem">' + esc(s.rating) + '</div></div>' : '') +
-    '</div></div></div>';
+    var facts = '<div><small>' + icon('drop') + 'Trinkwasser</small><b style="color:' + (s.drinkingWater ? 'var(--success)' : 'var(--danger)') + '">' + (s.drinkingWater ? 'ja' : 'nein') + '</b></div>' +
+      '<div><small>' + icon('plug') + 'Strom am Platz</small><b style="color:' + (s.powerAtSite ? 'var(--success)' : 'var(--danger)') + '">' + (s.powerAtSite ? 'ja' : 'nein') + '</b></div>';
+    if (s.price) facts += '<div><small>' + icon('coins') + 'Preis</small><b>' + esc(s.price) + '</b></div>';
+    if (s.rating) facts += '<div><small>' + icon('check') + 'Bewertung</small><b>' + esc(s.rating) + '</b></div>';
+    out += section(null, '<div class="card factgrid">' + facts + '</div>');
 
-    if (s.notes && s.notes.length) {
-      out += '<div class="section"><div class="section-title">Hinweise</div>' + notesHtml(s.notes) + '</div>';
+    /* Koordinaten */
+    out += section('Koordinaten', '<div class="card card-body">' +
+      '<div class="coord">' + esc(coordText(s.lat, s.lon)) + '</div>' +
+      '<div style="margin-top:12px">' + geoButtons(s.lat, s.lon, s.name, false) + '</div>' +
+      '<p class="tiny muted" style="margin-top:10px">Die Koordinaten stehen offline zur Verfügung und lassen sich ins Navi tippen. Die beiden Links greifen erst, wenn wieder Netz oder eine Karten-App da ist.</p>' +
+    '</div>');
+
+    if (s.details && s.details.length) {
+      out += section('Im Detail', '<div class="card card-body"><dl class="dl">' + s.details.map(function (x) {
+        return '<div><dt>' + esc(x.label) + '</dt><dd>' + esc(x.text) + '</dd></div>';
+      }).join('') + '</dl></div>');
     }
 
-    /* Zugehörige Tage */
-    var relDays = D.days.filter(function (d) { return d.accommodationId === s.id; });
-    if (relDays.length) {
-      out += '<div class="section"><div class="section-title">Zugehörige Tage</div>' +
-        relDays.map(function (d) { return dayCardHtml(d, true); }).join('') + '</div>';
-    }
+    if (s.notes && s.notes.length) out += section('Hinweise', notesHtml(s.notes));
 
+    if (relDays.length) out += section(relDays.length > 1 ? 'Die Tage hier' : 'Der Tag hier', relDays.map(tcard).join(''));
 
-    return out;
+    if (d0 && d0.imageCredit) out += '<p class="tiny muted">' + creditLong(d0) + '</p>';
+    return out + '</div>';
   }
 
   /* --- Karte ---------------------------------------------------------- */
 
   function viewMap(sel) {
-    if (sel) {
-      /* Auswahl kann eine Unterkunft oder ein Ort sein */
-      if (stay(sel)) state.mapSel = sel;
-    }
+    if (sel && stay(sel)) state.mapSel = sel;
     var s = stay(state.mapSel) || D.accommodations[0];
     var idx = D.accommodations.indexOf(s) + 1;
 
-    var out = '<div class="section"><div class="section-title">Route und 14 Stationen</div>' +
+    var out = '<div class="content top">' + largeTitle('Karte', 'Route und 14 Stationen') +
       '<div class="mapbox" id="mapbox">' + mapSvg(s.id) + '</div>' +
-      '<p class="tiny muted" style="margin-top:8px">Selbst gezeichnete Übersicht — erkennbar, aber nicht geodätisch exakt. Kartenkacheln funktionieren offline nicht, deshalb diese Lösung.</p>' +
-    '</div>';
+      '<p class="tiny muted" style="margin-top:8px">Selbst gezeichnete Übersicht, erkennbar, aber nicht geodätisch exakt. Kartenkacheln funktionieren offline nicht, deshalb diese Lösung.</p>';
 
-    out += '<div class="section"><div class="section-title">Station ' + idx + ' von 14</div>' +
-      '<div class="card"><div class="card-body">' +
-        '<b style="font-size:1.08rem">' + esc(s.name) + '</b>' +
-        '<div class="small muted">' + esc(s.type) + ' · ' + esc(s.dateText) + ' · Tag ' + s.dayNumbers.join(' und ') + '</div>' +
-        '<div class="coord" style="margin-top:10px">' + esc(coordText(s.lat, s.lon)) + '</div>' +
-        '<div style="margin-top:10px">' + geoLinks(s.lat, s.lon, s.name) + '</div>' +
-        '<div style="margin-top:12px"><a class="btn btn-block" href="#/stay/' + esc(s.id) + '">' + icon('stays') + '<span>Zur Unterkunft</span></a></div>' +
-      '</div></div></div>';
+    out += section('Station ' + idx + ' von 14', '<div class="card card-body">' +
+      '<b style="font-size:1.1rem">' + esc(s.name) + '</b>' +
+      '<div class="small muted">' + esc(s.type) + ' · ' + esc(s.dateText) + ' · Tag ' + s.dayNumbers.join(' und ') + '</div>' +
+      '<div class="coord" style="margin-top:10px">' + esc(coordText(s.lat, s.lon)) + '</div>' +
+      '<div style="margin-top:10px">' + geoButtons(s.lat, s.lon, s.name, false) + '</div>' +
+      '<a class="btn btn-primary btn-block" style="margin-top:10px" href="#/stay/' + esc(s.id) + '">' + icon('stays') + '<span>Zur Unterkunft</span></a>' +
+    '</div>');
 
-    out += '<div class="section"><div class="section-title">Alle Stationen</div><div class="card">' +
-      D.accommodations.map(function (a, i) {
-        return '<button class="linkrow" type="button" data-mapsel="' + esc(a.id) + '">' +
-          '<span class="chip chip-plain">' + (i + 1) + '</span>' +
-          '<div class="linkrow-main"><b>' + esc(a.name) + '</b><span>' + esc(coordText(a.lat, a.lon)) + ' · ' + esc(a.dateText) + '</span></div>' +
-          icon('next', 'ic-chev') + '</button>';
-      }).join('') + '</div></div>';
+    out += section('Alle Stationen', '<div class="card">' + D.accommodations.map(function (a, i) {
+      return '<button class="row" type="button" data-mapsel="' + esc(a.id) + '">' +
+        '<span class="numchip">' + (i + 1) + '</span>' +
+        '<div class="row-main"><b>' + esc(a.name) + '</b><span>' + esc(coordText(a.lat, a.lon)) + ' · ' + esc(a.dateText) + '</span></div>' +
+        icon('next', 'chev') + '</button>';
+    }).join('') + '</div>');
 
-    out += '<div class="section"><div class="section-title">Orte und Sehenswürdigkeiten</div><div class="card">' +
-      D.places.map(function (p) {
-        var c = p.lat.toFixed(4) + ',' + p.lon.toFixed(4);
-        return '<div class="linkrow" style="cursor:default;align-items:flex-start">' + icon('pin') +
-          '<div class="linkrow-main">' +
-            '<b>' + esc(p.name) + '</b>' +
-            '<span>Tag ' + esc(p.dayText) + ' · ' + esc(p.description) + '</span>' +
-            '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px">' +
-              '<button class="btn" type="button" style="min-height:44px;padding:0 12px;font-size:.85rem" data-copy="' + esc(coordText(p.lat, p.lon)) + '" data-copy-label="Koordinaten">' + icon('copy') + '<span>' + esc(coordText(p.lat, p.lon)) + '</span></button>' +
-              '<a class="btn" style="min-height:44px;padding:0 12px;font-size:.85rem" href="geo:' + c + '?q=' + c + '(' + encodeURIComponent(p.name) + ')">' + icon('pin') + '<span>Karten-App</span></a>' +
-              '<a class="btn" style="min-height:44px;padding:0 12px;font-size:.85rem" href="https://www.google.com/maps/search/?api=1&amp;query=' + c + '" target="_blank" rel="noopener">' + icon('map') + '<span>Maps</span></a>' +
-            '</div>' +
-          '</div></div>';
-      }).join('') + '</div></div>';
+    out += section('Orte und Sehenswürdigkeiten', '<div class="card">' + D.places.map(function (p) {
+      return '<div class="row static" style="align-items:flex-start">' + icon('pin') +
+        '<div class="row-main"><b>' + esc(p.name) + '</b><span>Tag ' + esc(p.dayText) + ' · ' + esc(p.description) + '</span>' +
+          geoButtons(p.lat, p.lon, p.name, true) + '</div></div>';
+    }).join('') + '</div>');
 
-    return out;
+    return out + '</div>';
   }
 
   /* --- Infos ---------------------------------------------------------- */
 
   function blockHtml(b) {
-    var cls = b.level === 'ok' ? 'note-ok' : (b.level === 'danger' ? 'note-danger' : (b.level === 'warn' ? 'note-warn' : 'note-info'));
-    var ic = b.level === 'ok' ? 'check' : (b.level === 'info' ? 'info' : 'warn');
-    return '<div class="note ' + cls + '">' + icon(ic) +
-      '<div>' + (b.label ? '<b>' + esc(b.label) + ':</b> ' : '') + esc(b.text) + '</div></div>';
+    return noteHtml({ level: b.level, text: (b.label ? b.label + ': ' : '') + b.text });
   }
 
   function tableHtml(t) {
@@ -964,57 +784,49 @@
     return out;
   }
 
-  function viewInfo() {
-    var out = '';
+  function acc(iconName, title, body, bodyCls) {
+    return '<details class="acc"><summary>' + icon(iconName) + esc(title) + icon('next', 'caret') + '</summary>' +
+      '<div class="acc-body' + (bodyCls ? ' ' + bodyCls : '') + '">' + body + '</div></details>';
+  }
 
-    /* Reiseüberblick */
-    out += '<div class="section"><div class="section-title">Die Reise</div><div class="card"><div class="card-body">' +
+  function viewInfo() {
+    var out = '<div class="content top">' + largeTitle('Infos');
+
+    out += '<div class="card card-body">' +
       '<b style="font-size:1.1rem">' + esc(D.meta.title) + '</b>' +
       '<div class="small muted">' + esc(D.meta.subtitle) + ' · ' + D.meta.days + ' Tage · ' + D.meta.nights + ' Nächte</div>' +
-      '<dl class="dl" style="margin-top:10px">' + D.meta.facts.map(function (f) {
+      '<dl class="dl" style="margin-top:12px">' + D.meta.facts.map(function (f) {
         return '<div><dt>' + esc(f.label) + '</dt><dd>' + esc(f.value) + '</dd></div>';
-      }).join('') + '</dl>' +
-    '</div></div></div>';
+      }).join('') + '</dl></div>';
 
-    /* Flüge */
-    out += '<div class="section"><div class="section-title">Flüge</div>' +
-      D.flights.map(flightCard).join('') + '</div>';
+    out += section('Flüge', D.flights.map(passHtml).join(''));
 
-    /* Buchungsstand */
-    out += '<div class="section"><details class="acc"><summary>' + icon('check') + 'Buchungsstand<svg class="ic caret"><use href="#i-next"></use></svg></summary>' +
-      '<div class="acc-body">' +
-        '<p class="strong">' + esc(D.bookingOverview.summary) + '</p>' +
-        '<p>' + esc(D.bookingOverview.note) + '</p>' +
-        '<div class="tablewrap"><table class="data"><thead><tr><th>Tag</th><th>Datum</th><th>Unterkunft</th><th>Art</th><th>Status</th></tr></thead><tbody>' +
-        D.bookingOverview.rows.map(function (r) {
-          var s = stay(r.accommodationId);
-          return '<tr><td>' + esc(r.days) + '</td><td>' + esc(r.date) + '</td><td>' + esc(s.name) + '</td><td>' + esc(r.type) + '</td><td>' + statusChip(r.status, r.statusText) + '</td></tr>';
-        }).join('') +
-        '</tbody></table></div>' +
-      '</div></details></div>';
+    out += section('Buchungsstand', acc('check', 'Alle Unterkünfte',
+      '<p class="strong">' + esc(D.bookingOverview.summary) + '</p>' +
+      '<p class="small">' + esc(D.bookingOverview.note) + '</p>' +
+      '<div class="tablewrap"><table class="data"><thead><tr><th>Tag</th><th>Datum</th><th>Unterkunft</th><th>Art</th><th>Status</th></tr></thead><tbody>' +
+      D.bookingOverview.rows.map(function (r) {
+        var s = stay(r.accommodationId);
+        return '<tr><td>' + esc(r.days) + '</td><td>' + esc(r.date) + '</td><td>' + esc(s.name) + '</td><td>' + esc(r.type) + '</td><td>' + statusChip(r.status, r.statusText) + '</td></tr>';
+      }).join('') + '</tbody></table></div>'));
 
-    /* Die Abschnitte 7 bis 12 */
-    out += '<div class="section"><div class="section-title">Unterwegs</div>' +
-      D.info.map(function (sec) {
-        return '<details class="acc"><summary>' + icon(sec.icon || 'info') + esc(sec.title) +
-          '<svg class="ic caret"><use href="#i-next"></use></svg></summary>' +
-          '<div class="acc-body prose">' + infoSectionBody(sec) + '</div></details>';
-      }).join('') + '</div>';
+    out += section('Unterwegs', D.info.map(function (sec) {
+      return acc(sec.icon || 'info', sec.title, infoSectionBody(sec), 'prose');
+    }).join(''));
 
-    /* Aktivitäten */
-    out += '<div class="section"><div class="section-title">Aktivitäten</div>' +
-      '<details class="acc"><summary>' + icon('ticket') + 'Vorab zu buchen<svg class="ic caret"><use href="#i-next"></use></svg></summary>' +
-        '<div class="acc-body" style="padding-left:0;padding-right:0">' +
-        D.activities.filter(function (a) { return a.bookAhead; }).map(activityRow).join('') + '</div></details>' +
-      '<details class="acc"><summary>' + icon('check') + 'Vor Ort buchbar oder frei<svg class="ic caret"><use href="#i-next"></use></svg></summary>' +
-        '<div class="acc-body" style="padding-left:0;padding-right:0">' +
-        D.activities.filter(function (a) { return !a.bookAhead; }).map(activityRow).join('') + '</div></details>' +
-    '</div>';
+    out += section('Aktivitäten',
+      acc('ticket', 'Vorab zu buchen', D.activities.filter(function (a) { return a.bookAhead; }).map(activityRow).join(''), 'flushrows') +
+      acc('check', 'Vor Ort buchbar oder frei', D.activities.filter(function (a) { return !a.bookAhead; }).map(activityRow).join(''), 'flushrows'));
 
-    out += '<div class="section"><p class="tiny muted">Diese App enthält keine Anmeldung, kein Konto, keine Cloud und keine Analytik. ' +
-      'Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt. Alle Angaben stammen aus dem Reiseplan v3.</p></div>';
+    out += section('Bildnachweise', acc('info', 'Fotos der 18 Tage',
+      '<div class="creditlist">' + D.days.map(function (d) {
+        return '<div><b>Tag ' + d.number + ':</b> ' + creditLong(d) + '</div>';
+      }).join('') + '</div>', 'flushrows'));
 
-    return out;
+    out += '<p class="tiny muted">Diese App enthält keine Anmeldung, kein Konto, keine Cloud und keine Analytik. ' +
+      'Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt. Die Reiseangaben stammen aus dem Reiseplan v3, die Fotos von Wikimedia Commons.</p>';
+
+    return out + '</div>';
   }
 
   /* --- Packliste ----------------------------------------------------- */
@@ -1077,54 +889,61 @@
   }
 
   function packItemHtml(p) {
-    return '<div class="checkitem packitem' + (p.done ? ' done' : '') + '" data-pack="' + esc(p.id) + '" role="button" tabindex="0">' +
-      '<span class="checkbox">' + icon('check') + '</span>' +
-      '<div class="checkitem-main"><b>' + esc(p.text) + '</b></div>' +
-      '<div class="qty">' +
-        '<button class="qtybtn" type="button" data-packqty="' + esc(p.id) + '" data-delta="-1" aria-label="Menge verringern"' + (p.qty <= 1 ? ' aria-disabled="true"' : '') + '>' + icon('minus') + '</button>' +
-        '<span class="qty-val" aria-label="Menge">' + p.qty + '</span>' +
-        '<button class="qtybtn" type="button" data-packqty="' + esc(p.id) + '" data-delta="1" aria-label="Menge erhöhen">' + icon('plus') + '</button>' +
+    return '<div class="pitem' + (p.done ? ' done' : '') + '" data-pack="' + esc(p.id) + '" role="button" tabindex="0">' +
+      '<span class="pcheck">' + icon('check') + '</span>' +
+      '<div class="pitem-main">' + esc(p.text) + '</div>' +
+      '<div class="stepper">' +
+        '<button type="button" data-packqty="' + esc(p.id) + '" data-delta="-1" aria-label="Menge verringern"' + (p.qty <= 1 ? ' aria-disabled="true"' : '') + '>' + icon('minus') + '</button>' +
+        '<span aria-label="Menge">' + p.qty + '</span>' +
+        '<button type="button" data-packqty="' + esc(p.id) + '" data-delta="1" aria-label="Menge erhöhen">' + icon('plus') + '</button>' +
       '</div>' +
-      '<button class="del" type="button" data-packdel="' + esc(p.id) + '" aria-label="Eintrag löschen">' + icon('trash') + '</button>' +
+      '<button class="pdel" type="button" data-packdel="' + esc(p.id) + '" aria-label="Eintrag löschen">' + icon('trash') + '</button>' +
     '</div>';
   }
 
   function viewPacking() {
     var list = packingList();
     var st = packingStats();
-    var out = '';
+    var cats = packCategories();
+    var out = '<div class="content top">' + largeTitle('Packliste');
 
-    /* Fortschritt */
-    var pct = st.total ? Math.round(st.done / st.total * 100) : 0;
-    out += '<div class="section"><div class="card"><div class="card-body">' +
-      '<b>' + (st.total === 0 ? 'Noch keine Einträge' : st.done + ' von ' + st.total + ' eingepackt') + '</b>' +
-      '<div class="progress" aria-hidden="true"><span style="width:' + pct + '%"></span></div>' +
-    '</div></div></div>';
+    out += '<div class="card ringcard">' + ringHtml(st.done, st.total) +
+      '<div style="min-width:0"><h3>' + (st.total === 0 ? 'Noch keine Einträge' : st.done + ' von ' + st.total + ' eingepackt') + '</h3>' +
+      '<p>Antippen hakt ab. Plus und Minus ändern die Menge.</p></div></div>';
 
-    /* Einträge je Kategorie, leere Kategorien werden nicht gezeigt */
-    packCategories().forEach(function (c) {
+    /* Filter nach Kategorie; nur Kategorien mit Einträgen */
+    if (list.length) {
+      if (state.packFilter !== 'alle' && !list.some(function (p) { return p.category === state.packFilter; })) state.packFilter = 'alle';
+      out += '<div class="section first"><div class="filter">' +
+        [{ id: 'alle', label: 'Alle' }].concat(cats).map(function (c) {
+          var n = c.id === 'alle' ? list.length : list.filter(function (p) { return p.category === c.id; }).length;
+          if (!n) return '';
+          return '<button type="button" data-packfilter="' + esc(c.id) + '" aria-pressed="' + (state.packFilter === c.id) + '">' + esc(c.label) + ' ' + n + '</button>';
+        }).join('') + '</div></div>';
+    }
+
+    cats.forEach(function (c) {
+      if (state.packFilter !== 'alle' && state.packFilter !== c.id) return;
       var items = list.filter(function (p) { return p.category === c.id; });
       if (!items.length) return;
       var done = items.filter(function (p) { return p.done; }).length;
-      out += '<div class="section"><div class="section-title">' + esc(c.label) + ' · ' + done + '/' + items.length + '</div>' +
-        '<div class="card">' + items.map(packItemHtml).join('') + '</div></div>';
+      out += section(c.label, '<div class="card">' + items.map(packItemHtml).join('') + '</div>', done + '/' + items.length);
     });
 
-    /* Neuer Eintrag */
-    out += '<div class="section"><div class="section-title">Neuer Eintrag</div><div class="card"><div class="packform">' +
+    out += section('Neuer Eintrag', '<div class="card"><div class="addform">' +
       '<input class="input" id="pack-input" type="text" placeholder="Was soll mit?" autocomplete="off" aria-label="Gegenstand">' +
-      '<div class="packform-row">' +
+      '<div class="addform-row">' +
         '<input class="input input-qty" id="pack-qty" type="number" inputmode="numeric" min="1" step="1" value="1" aria-label="Menge">' +
-        '<select class="input" id="pack-cat" aria-label="Kategorie">' +
-          packCategories().map(function (c) {
+        '<select class="select" id="pack-cat" aria-label="Kategorie">' +
+          cats.map(function (c) {
             return '<option value="' + esc(c.id) + '"' + (c.id === state.packCat ? ' selected' : '') + '>' + esc(c.label) + '</option>';
           }).join('') +
         '</select>' +
-        '<button class="btn btn-primary" type="button" id="pack-add" aria-label="Hinzufügen">' + icon('plus') + '</button>' +
+        '<button class="addbtn" type="button" id="pack-add" aria-label="Hinzufügen">' + icon('plus') + '</button>' +
       '</div>' +
-    '</div></div></div>';
+    '</div></div>');
 
-    out += '<div class="section"><div class="section-title">Abgleich zwischen den Handys</div><div class="card"><div class="card-body">' +
+    out += section('Abgleich zwischen den Handys', '<div class="card card-body">' +
       '<p class="small">Die Packliste wird auf jedem Gerät getrennt gespeichert. Zum Abgleich den Stand auf dem einen Gerät erzeugen und kopieren, auf dem anderen einfügen und importieren. Der Import ersetzt die Liste auf dem Zielgerät. Kein Konto, keine Cloud, kein Netz nötig.</p>' +
       '<textarea class="textarea" id="sync-box" spellcheck="false" aria-label="Datenaustausch als JSON"></textarea>' +
       '<div class="btnrow" style="margin-top:10px">' +
@@ -1134,9 +953,9 @@
       '<div class="btnrow" style="margin-top:8px">' +
         '<button class="btn" type="button" id="sync-copy">' + icon('copy') + '<span>Feld kopieren</span></button>' +
       '</div>' +
-    '</div></div></div>';
+    '</div>');
 
-    return out;
+    return out + '</div>';
   }
 
   /* =========================================================================
@@ -1159,14 +978,13 @@
 
   function titleFor(r) {
     switch (r.view) {
-      case 'today': return 'Heute';
-      case 'trip':  return 'Unsere Reise';
-      case 'day':   var d = day(r.arg); return d ? 'Tag ' + d.number : 'Tag';
-      case 'stay':  var s = stay(r.arg); return s ? s.name : 'Unterkunft';
+      case 'trip':    return 'Unsere Reise';
+      case 'day':     var d = day(r.arg); return d ? 'Tag ' + d.number : 'Tag';
+      case 'stay':    var s = stay(r.arg); return s ? s.name : 'Unterkunft';
       case 'packing': return 'Packliste';
-      case 'map':   return 'Karte';
-      case 'info':  return 'Infos';
-      default: return 'Namibia 2026';
+      case 'map':     return 'Karte';
+      case 'info':    return 'Infos';
+      default:        return 'Heute';
     }
   }
 
@@ -1183,24 +1001,19 @@
     /* Scrollposition der verlassenen Ansicht merken */
     if (state.route) scrollMemory[state.route] = scroller.scrollTop;
 
-    var html = '', flush = false;
+    var html;
     switch (r.view) {
-      case 'trip':       html = viewTrip(); break;
-      case 'day':        html = viewDay(r.arg); flush = true; break;
-      case 'stay':       html = viewStay(r.arg); break;
-      case 'packing':    html = viewPacking(); break;
-      case 'map':        html = viewMap(r.arg); break;
-      case 'info':       html = viewInfo(); break;
-      default:           html = viewToday(); break;
+      case 'trip':    html = viewTrip(); break;
+      case 'day':     html = viewDay(r.arg); break;
+      case 'stay':    html = viewStay(r.arg); break;
+      case 'packing': html = viewPacking(); break;
+      case 'map':     html = viewMap(r.arg); break;
+      case 'info':    html = viewInfo(); break;
+      default:        html = viewToday(); break;
     }
 
-    host.className = 'view' + (flush ? ' flush' : '');
     host.innerHTML = html;
-
-    $('#topbar-title').textContent = titleFor(r);
-
-    var isDetail = (r.view === 'day' || r.view === 'stay');
-    $('#btn-back').hidden = !isDetail;
+    document.title = titleFor(r) + ' · Namibia 2026';
 
     var activeTab = tabFor(r);
     var tabs = document.querySelectorAll('.tab');
@@ -1211,28 +1024,63 @@
 
     state.route = r.view + '/' + (r.arg || '');
     scroller.scrollTop = scrollMemory[state.route] || 0;
+    parallax();
 
     if (r.view === 'packing') wirePacking();
   }
 
+  /* Neu zeichnen, ohne die Scrollposition zu verlieren (Haken, Menge, Filter) */
+  function rerender() {
+    var keep = $('#scroller').scrollTop;
+    render();
+    $('#scroller').scrollTop = keep;
+    parallax();
+  }
+
   window.addEventListener('hashchange', render);
+
+  /* Das Tagesfoto läuft beim Scrollen langsamer mit */
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function parallax() {
+    var hero = document.getElementById('parallax');
+    if (!hero || reduceMotion) return;
+    var img = hero.querySelector('img');
+    var y = $('#scroller').scrollTop;
+    if (img && y < 700) img.style.transform = 'translateY(' + (y * 0.35).toFixed(1) + 'px)';
+  }
+  $('#scroller').addEventListener('scroll', parallax, { passive: true });
 
   /* =========================================================================
      7 · Ereignisse
      ====================================================================== */
 
-  /* Kopieren, Kartenauswahl, manueller Tag, Checkboxen — per Delegation */
   document.addEventListener('click', function (ev) {
     var t = ev.target;
+    if (!t.closest) return;
 
-    var copyEl = t.closest ? t.closest('[data-copy]') : null;
+    var copyEl = t.closest('[data-copy]');
     if (copyEl) {
       copyText(copyEl.getAttribute('data-copy'), copyEl.getAttribute('data-copy-label') || 'Text');
       ev.preventDefault();
       return;
     }
 
-    var sel = t.closest ? t.closest('[data-mapsel]') : null;
+    if (t.closest('[data-open-search]')) { openSearch(); return; }
+
+    if (t.closest('[data-toggle-theme]')) {
+      theme = isDark() ? 'light' : 'dark';
+      applyTheme(theme);
+      save(STORE.theme, theme);
+      return;
+    }
+
+    if (t.closest('[data-back]')) {
+      if (history.length > 1) history.back();
+      else location.hash = '#/trip';
+      return;
+    }
+
+    var sel = t.closest('[data-mapsel]');
     if (sel) {
       state.mapSel = sel.getAttribute('data-mapsel');
       render();
@@ -1240,20 +1088,20 @@
       return;
     }
 
-    var stop = t.closest ? t.closest('[data-stop]') : null;
+    var stop = t.closest('[data-stop]');
     if (stop) {
       state.mapSel = stop.getAttribute('data-stop');
-      render();
+      rerender();
       return;
     }
 
-    if (t.closest && t.closest('[data-toggle-manual]')) {
+    if (t.closest('[data-toggle-manual]')) {
       state.manualOpen = !state.manualOpen;
-      render();
+      rerender();
       return;
     }
 
-    if (t.closest && t.closest('[data-clear-manual]')) {
+    if (t.closest('[data-clear-manual]')) {
       state.manualDayId = null;
       state.manualOpen = false;
       save(STORE.manual, null);
@@ -1261,51 +1109,57 @@
       return;
     }
 
+    var pf = t.closest('[data-packfilter]');
+    if (pf) {
+      state.packFilter = pf.getAttribute('data-packfilter');
+      rerender();
+      return;
+    }
+
     /* Die Knöpfe in einem Packlisten-Eintrag werden vor dem Eintrag selbst
        geprüft, sonst würde jeder Tipp darauf auch den Haken umschalten. */
-    var pqty = t.closest ? t.closest('[data-packqty]') : null;
+    var pqty = t.closest('[data-packqty]');
     if (pqty) {
       var delta = parseInt(pqty.getAttribute('data-delta'), 10) || 0;
       updatePackItem(pqty.getAttribute('data-packqty'), function (p) { p.qty = Math.max(1, p.qty + delta); });
-      render();
+      rerender();
       return;
     }
 
     /* Tipp auf die Mengenanzeige selbst: nichts tun */
-    if (t.closest && t.closest('.qty')) return;
+    if (t.closest('.stepper')) return;
 
-    var pdel = t.closest ? t.closest('[data-packdel]') : null;
+    var pdel = t.closest('[data-packdel]');
     if (pdel) {
       var pid = pdel.getAttribute('data-packdel');
       var item = byId(packingList(), pid);
       if (item && !window.confirm('„' + item.text + '“ von der Packliste löschen?')) return;
       save(STORE.packing, packingList().filter(function (p) { return p.id !== pid; }));
-      render();
+      rerender();
       return;
     }
 
-    var pack = t.closest ? t.closest('[data-pack]') : null;
+    var pack = t.closest('[data-pack]');
     if (pack) {
       updatePackItem(pack.getAttribute('data-pack'), function (p) { p.done = !p.done; });
-      render();
+      rerender();
       return;
     }
   });
 
   document.addEventListener('change', function (ev) {
     if (ev.target && ev.target.hasAttribute && ev.target.hasAttribute('data-manual-select')) {
-      var v = ev.target.value;
-      state.manualDayId = v || null;
+      state.manualDayId = ev.target.value || null;
       save(STORE.manual, state.manualDayId);
       render();
     }
   });
 
-  /* Tastatur für die Checkboxen */
+  /* Tastatur für die Packlisten-Einträge */
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Enter' && ev.key !== ' ') return;
     var el = ev.target;
-    if (el && el.classList && el.classList.contains('checkitem')) {
+    if (el && el.classList && el.classList.contains('pitem')) {
       ev.preventDefault();
       el.click();
     }
@@ -1326,7 +1180,7 @@
           category: state.packCat, text: text, qty: n > 0 ? n : 1, done: false
         }));
         save(STORE.packing, list);
-        render();
+        rerender();
         var again = $('#pack-input');
         if (again) again.focus();
       });
@@ -1368,19 +1222,6 @@
       toast('Stand übernommen');
     });
   }
-
-  /* Zurück ------------------------------------------------------------- */
-  $('#btn-back').addEventListener('click', function () {
-    if (history.length > 1) history.back();
-    else location.hash = '#/trip';
-  });
-
-  /* Thema -------------------------------------------------------------- */
-  $('#btn-theme').addEventListener('click', function () {
-    theme = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
-    applyTheme(theme);
-    save(STORE.theme, theme);
-  });
 
   /* Wischen zwischen den Tagen ---------------------------------------- */
   (function () {
@@ -1484,10 +1325,10 @@
             var from = Math.max(0, pos - 40);
             snippet = (from > 0 ? '… ' : '') + h.text.slice(from, pos + q.length + 70) + ' …';
           }
-          return '<a class="linkrow" href="' + h.href + '" data-search-go>' +
-            '<div class="linkrow-main"><b>' + highlight(h.title, q) + '</b>' +
+          return '<a class="row" href="' + h.href + '" data-search-go>' +
+            '<div class="row-main"><b>' + highlight(h.title, q) + '</b>' +
             '<span>' + esc(h.sub) + (snippet ? '<br>' + highlight(snippet, q) : '') + '</span></div>' +
-            icon('next', 'ic-chev') + '</a>';
+            icon('next', 'chev') + '</a>';
         }).join('') + '</div>';
     }).join('');
   }
@@ -1501,7 +1342,6 @@
   }
   function closeSearch() { $('#search-overlay').hidden = true; }
 
-  $('#btn-search').addEventListener('click', openSearch);
   $('#search-close').addEventListener('click', closeSearch);
   $('#search-input').addEventListener('input', function (e) { runSearch(e.target.value); });
   $('#search-results').addEventListener('click', function (e) {

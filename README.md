@@ -33,6 +33,8 @@ assets/photos/d01.jpg … assets/photos/d18.jpg   (18 Tagesfotos)
 Die Ordner `assets` und `assets/photos` entstehen dabei automatisch, wenn du sie mitziehst.
 
 Der Ordner `demo/` enthält nur den Design-Vorschlag und muss nicht hochgeladen werden.
+Dasselbe gilt für `namibia-reiseplan-v3.md` und `PROMPT-PWA.md`. Beide enthalten
+persönliche Angaben und bleiben nur lokal.
 
 Über die Kommandozeile:
 
@@ -67,7 +69,7 @@ Der erste Aufbau dauert ein bis zwei Minuten.
 https://<user>.github.io/<repo>/
 ```
 
-Also zum Beispiel `https://sven-schrade.github.io/namibia-2026/`.
+Also zum Beispiel `https://<user>.github.io/namibia-2026/`.
 
 Die App verwendet ausschließlich relative Pfade und läuft deshalb korrekt in diesem
 Unterverzeichnis. Bitte den abschließenden Schrägstrich mit aufrufen.
@@ -132,7 +134,7 @@ und trage diese beim passenden Tag ein.
 erhöhen:**
 
 ```js
-const CACHE = 'namibia-v6';   //  ->  'namibia-v7'
+const CACHE = 'namibia-v7';   //  ->  'namibia-v8'
 ```
 
 Ohne diesen Schritt behalten die Handys den alten Stand, weil der Service Worker konsequent
@@ -166,7 +168,7 @@ Ein Foto durch ein eigenes ersetzen:
 1. Das eigene Bild als `assets/photos/d07.jpg` speichern (Beispiel Tag 7), etwa 960 Pixel
    breit und möglichst unter 300 KB.
 2. In `data.js` beim Tag den Eintrag `imageCredit` anpassen, zum Beispiel
-   `caption: 'Deadvlei', artist: 'Sven Schrade'` und für `license`, `licenseUrl` und `source`
+   `caption: 'Deadvlei', artist: 'Vorname Nachname'` und für `license`, `licenseUrl` und `source`
    leere Texte `''`.
 3. Die Cache-Version in `sw.js` erhöhen.
 
@@ -214,7 +216,7 @@ sonst fehlt es offline.
   Inline-SVG-Sprite im HTML, App-Icons im Repository.
 * Ausschließlich relative Pfade, `start_url` und `scope` sind `./`.
 * Service Worker: legt beim `install` **alle** Dateien einschließlich der 18 Tagesfotos in den
-  versionierten Cache `namibia-v6` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
+  versionierten Cache `namibia-v7` und liefert danach **cache-first**. Alte Caches werden beim `activate` gelöscht.
   Nach dem ersten Laden findet kein Netzwerkaufruf mehr statt.
 * iOS: `apple-mobile-web-app-capable`, `black-translucent`-Statusleiste,
   `apple-touch-icon` in 180×180, `viewport-fit=cover` und `env(safe-area-inset-*)` in den

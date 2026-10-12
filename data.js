@@ -85,7 +85,7 @@ const TRIP = {
   --------------------------------------------------------------------- */
   bookingOverview: {
     summary: 'Alle 17 Nächte sind fest gebucht. Bezahlt sind alle bis auf den Restbetrag für Twyfelfontein: dort sind 20 % angezahlt, der Rest wird bei Ankunft bezahlt.',
-    note: 'Bei Spitzkoppe liegt die endgültige Bestätigung vor. Referenz SPI-260807-006, eigene Referenz „Schrade". Die Bestätigung ausdrucken und offline speichern — an der Spitzkoppe gibt es keinen Empfang.',
+    note: 'Bei Spitzkoppe liegt die endgültige Bestätigung vor. Die Bestätigung ausdrucken und offline speichern — an der Spitzkoppe gibt es keinen Empfang.',
     rows: [
       { days: '1',     date: 'Mo 19.10.',            accommodationId: 'kalahari-anib',  type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
       { days: '2',     date: 'Di 20.10.',            accommodationId: 'stellies',       type: 'Zimmer',   status: 'paid',      statusText: 'gebucht und bezahlt' },
@@ -853,7 +853,7 @@ const TRIP = {
       status: 'paid', statusText: 'gebucht und bezahlt, Endbestätigung liegt vor', group: null,
       lat: -21.8395, lon: 15.2016,
       phone: null, email: null, contact: 'Tamara',
-      reference: 'SPI-260807-006', ownReference: 'Schrade',
+      reference: null, ownReference: null,
       drinkingWater: false, powerAtSite: false,
       price: 'N$ 600 bezahlt',
       rating: null,
